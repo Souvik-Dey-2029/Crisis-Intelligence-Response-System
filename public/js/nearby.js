@@ -281,19 +281,15 @@ function displayAIRisks(data) {
 
     if (!data.ai_risks || data.ai_risks.length === 0) {
         container.innerHTML = `
-            <div class="ai-risks-section">
-                <h2 class="section-title">🤖 AI Risk Analysis</h2>
-                <div class="empty-state-box">
-                    <i class="fas fa-robot"></i>
-                    <p>No major AI-identified risks in your area</p>
-                </div>
+            <div class="empty-state-box">
+                <i class="fas fa-robot"></i>
+                <p>No major AI-identified risks in your area</p>
             </div>
         `;
         return;
     }
 
-    let html = '<h2 class="section-title">🤖 AI Risk Analysis</h2>';
-    html += '<div class="ai-risks-grid">';
+    let html = '<div class="ai-risks-grid">';
 
     data.ai_risks.forEach((risk) => {
         const icon = getRiskIcon(risk.type);

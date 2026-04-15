@@ -1966,11 +1966,59 @@ body {
     padding: 1.5rem;
     backdrop-filter: blur(10px);
     transition: var(--transition);
+    position: relative;
+}
+
+/* Section Divider */
+.nearby-section::after {
+    content: '';
+    position: absolute;
+    bottom: -1rem;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+}
+
+.nearby-section:last-child::after {
+    display: none;
 }
 
 .nearby-section:hover {
     border-color: rgba(0, 212, 255, 0.3);
     box-shadow: 0 8px 25px rgba(0, 212, 255, 0.1);
+}
+
+/* AI Risk Section - Enhanced Styling */
+.nearby-section.ai-risk-section {
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.08), rgba(75, 0, 130, 0.05));
+    border: 2px solid rgba(138, 43, 226, 0.3);
+    box-shadow: 0 0 20px rgba(138, 43, 226, 0.1);
+    position: relative;
+}
+
+.nearby-section.ai-risk-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.5), transparent);
+}
+
+.section-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(138, 43, 226, 0.2);
+}
+
+.section-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-style: italic;
+    letter-spacing: 0.3px;
 }
 
 .section-title {
