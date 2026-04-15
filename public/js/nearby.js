@@ -291,12 +291,12 @@ function displayAIRisks(data) {
 
     let html = '<div class="ai-risks-grid">';
 
-    data.ai_risks.forEach((risk) => {
+    data.ai_risks.forEach((risk, index) => {
         const icon = getRiskIcon(risk.type);
         const severityClass = risk.severity.toLowerCase();
 
         html += `
-            <div class="ai-risk-card ${severityClass}">
+            <div class="ai-risk-card ${severityClass}" onclick="showAIRiskDetails(${index})">
                 <div class="risk-header">
                     <div class="risk-icon">${icon}</div>
                     <div class="risk-type">${formatRiskType(risk.type)}</div>
@@ -315,7 +315,11 @@ function displayAIRisks(data) {
 
     html += '</div>';
     container.innerHTML = html;
-    console.log('✅ [AI] AI risks rendered successfully');
+
+    // Store risks data for modal access
+    window.currentAIRisks = data.ai_risks;
+
+    console.log('✅ [AI] AI risks rendered successfully - cards are interactive');
 }
 
 // ==================== CREATE ALERT BEACON ====================
@@ -529,3 +533,175 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('✅ Nearby alerts system initialized');
 });
+
+// ==================== AI RISK MODAL FUNCTIONS ====================
+
+/**
+ * Show detailed risk information in modal
+ * @param {number} index - Index of risk in window.currentAIRisks array
+ */
+function showAIRiskDetails(index) {
+    console.log('🎯 [MODAL] Opening risk details:', index);
+
+    if (!window.currentAIRisks || !window.currentAIRisks[index]) {
+        console.error('❌ [MODAL] Risk not found at index', index);
+        return;
+    }
+
+    const risk = window.currentAIRisks[index];
+    console.log('📋 [MODAL] Risk data:', risk);
+
+    // Get icon for risk type
+    const icon = getRiskIcon(risk.type);
+
+    // Populate modal header
+    document.getElementById('riskModalIcon').textContent = icon;
+    document.getElementById('riskModalTitle').textContent = formatRiskType(risk.type);
+
+    // Set severity class and text
+    const severityEl = document.getElementById('riskModalSeverity');
+    severityEl.textContent = risk.severity.toUpperCase();
+    severityEl.className = 'risk-modal-severity ' + risk.severity.toLowerCase();
+
+    // Set explanation/why this risk exists
+    const explanation = risk.explanation || risk.message || getDefaultExplanation(risk.type);
+    document.getElementById('riskModalExplanation').textContent = explanation;
+
+    // Generate/set precautions list
+    const precautions = risk.precautions || generatePrecautions(risk.type);
+    const precautionsList = document.getElementById('riskModalPrecautions');
+    precautionsList.innerHTML = precautions.map(p => `<li>${p}</li>`).join('');
+
+    // Show modal with animation
+    const modal = document.getElementById('aiRiskModal');
+    modal.classList.add('show');
+    console.log('✅ [MODAL] Risk modal displayed with animation');
+
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Close the AI risk details modal
+ */
+function closeAIRiskModal() {
+    console.log('❌ [MODAL] Closing risk modal');
+    const modal = document.getElementById('aiRiskModal');
+
+    // Remove show class (triggers fade-out animation)
+    modal.classList.remove('show');
+
+    // Reset body scroll
+    document.body.style.overflow = 'auto';
+
+    console.log('✅ [MODAL] Risk modal closed');
+}
+
+/**
+ * Generate precautions based on risk type
+ * @param {string} riskType - Type of risk (fire, flood, weather_hazard, etc.)
+ * @returns {array} Array of precaution strings
+ */
+function generatePrecautions(riskType) {
+    const precautionsByType = {
+        fire: [
+            'Avoid low-lying and forested areas prone to fire spread',
+            'Keep emergency supplies ready with water and first aid kit',
+            'Monitor local news and fire advisories continuously',
+            'Know evacuation routes and assembly points in your area',
+            'Keep important documents in a fireproof container'
+        ],
+        flood: [
+            'Avoid low-lying areas and water crossings immediately',
+            'Move valuables and important documents to higher ground',
+            'Stock safe drinking water, food, and essential medicines',
+            'Monitor weather alerts and flood warnings closely',
+            'Know evacuation routes to higher terrain in advance'
+        ],
+        weather_hazard: [
+            'Stay indoors and avoid unnecessary travel during severe weather',
+            'Monitor weather updates and official warnings continuously',
+            'Secure loose outdoor items that could become projectiles',
+            'Stock water, food, and essential medicines for 3+ days',
+            'Keep flashlights, batteries, and first aid kit accessible'
+        ],
+        traffic_accident: [
+            'Use designated crossings and marked safe routes only',
+            'Wear visible clothing, reflectors, or LED accessories',
+            'Stay alert to traffic and surroundings at all times',
+            'Avoid traveling during peak traffic hours if possible',
+            'Report hazardous road conditions to authorities'
+        ],
+        medical_emergency: [
+            'Know the location of nearest hospitals and clinics',
+            'Keep emergency contact numbers written and memorized',
+            'Learn basic first aid and CPR techniques from certified trainer',
+            'Keep crucial medications and prescriptions updated always',
+            'Maintain health insurance and medical documentation'
+        ],
+        structural_collapse: [
+            'Stay away from damaged or abandoned buildings in area',
+            'Report unsafe structures to local authorities immediately',
+            'Evacuate if locals warn of structural compromises',
+            'Keep emergency supplies and communication devices ready',
+            'Stay informed about building safety inspections/repairs'
+        ],
+        industrial_accident: [
+            'Maintain safe distance from industrial zones and factories',
+            'Monitor air quality alerts specific to your location',
+            'Keep windows closed if chemical/toxin warnings issued',
+            'Know evacuation procedures for industrial emergencies',
+            'Keep medical emergency contacts of local hospitals available'
+        ],
+        stampede: [
+            'Avoid large crowds and gatherings in high-risk areas',
+            'If in crowds, stay towards edges and open spaces',
+            'Know multiple exits and evacuation routes always',
+            'Keep children and elderly assisted persons close at all times',
+            'Use buddy system and maintain communication with group'
+        ],
+        other: [
+            'Stay alert and monitor situation continuously',
+            'Keep emergency supplies and communication ready',
+            'Know emergency contact numbers for your area',
+            'Have basic evacuation plan and assembly points prepared',
+            'Stay informed through official news and alerts'
+        ]
+    };
+
+    return precautionsByType[riskType] || precautionsByType.other;
+}
+
+/**
+ * Get default explanation for risk type
+ * @param {string} riskType - Type of risk
+ * @returns {string} Default explanation message
+ */
+function getDefaultExplanation(riskType) {
+    const explanationsByType = {
+        fire: 'High fire risk exists in this area due to weather conditions and local terrain. Be prepared to evacuate with important documents and belongings.',
+        flood: 'Flood risk is elevated in this area due to recent weather and geographic location. Avoid water crossings and stay on high ground.',
+        weather_hazard: 'Severe weather conditions are expected in this area. Stay indoors and monitor official weather alerts for updates.',
+        traffic_accident: 'High accident risk on roads in this area. Use extreme caution when traveling and follow traffic rules strictly.',
+        medical_emergency: 'Medical emergency facilities may be overloaded. Know nearest hospitals and keep emergency contacts ready.',
+        structural_collapse: 'Structural hazards reported in this area. Avoid weakened buildings and report unsafe structures.',
+        industrial_accident: 'Industrial hazard risk exists nearby. Monitor air quality and follow evacuation procedures if required.',
+        stampede: 'Large crowd gathering risk in this area. Avoid congested areas and potential stampede hotspots.',
+        other: 'Risk alert for this area. Stay informed and prepared for emergencies.'
+    };
+
+    return explanationsByType[riskType] || explanationsByType.other;
+}
+
+// Close modal when clicking close button (backup)
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('aiRiskModal');
+    if (modal) {
+        // Close when clicking modal backdrop
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeAIRiskModal();
+            }
+        });
+    }
+}, { once: true });
