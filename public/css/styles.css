@@ -3388,3 +3388,470 @@ body {
         max-width: 100%;
     }
 }
+
+/* ==================== DASHBOARD ENHANCEMENTS & ANIMATIONS ==================== */
+
+/* Stat Cards Count-up Animation */
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    transition: transform 0.2s ease;
+}
+
+.stat-value:hover {
+    transform: scale(1.1);
+}
+
+/* Incident Cards Stagger Animation */
+.incident-card {
+    animation: slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.incident-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 40px rgba(0, 212, 255, 0.2);
+    border-color: rgba(0, 212, 255, 0.6);
+}
+
+/* Activity Feed Animations */
+.activity-item {
+    animation: slideInLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.activity-item:hover {
+    background: rgba(0, 212, 255, 0.08);
+    border-left-color: var(--primary);
+    padding-left: 1.2rem;
+}
+
+/* Prediction Cards Animations */
+.prediction-card {
+    animtion: fadeInScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.prediction-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.prediction-card.prediction-high {
+    border-left-color: var(--danger);
+}
+
+.prediction-card.prediction-medium {
+    border-left-color: var(--warning);
+}
+
+.prediction-card.prediction-low {
+    border-left-color: var(--success);
+}
+
+/* Severity Badges with Colors */
+.severity-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.3rem 0.8rem;
+    border-radius: 0.5rem;
+    transition: var(--transition);
+}
+
+.severity-badge.high {
+    background: rgba(255, 0, 67, 0.2);
+    color: #ff6b9d;
+}
+
+.severity-badge.medium {
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffb84d;
+}
+
+.severity-badge.low {
+    background: rgba(81, 207, 102, 0.2);
+    color: #a8f0b1;
+}
+
+.severity-badge:hover {
+    transform: scale(1.1);
+}
+
+/* Status Badges */
+.status-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.4rem;
+    background: rgba(0, 212, 255, 0.15);
+    color: var(--primary);
+    margin-left: auto;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.verified {
+    background: rgba(81, 207, 102, 0.15);
+    color: var(--success);
+}
+
+.status-badge.resolved {
+    background: rgba(0, 212, 255, 0.15);
+    color: var(--primary);
+}
+
+.status-badge.pending {
+    background: rgba(255, 165, 0, 0.15);
+    color: var(--warning);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Incident Card Icon */
+.incident-icon {
+    font-size: 2rem;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem;
+    background: rgba(0, 212, 255, 0.08);
+    border-radius: 0.8rem;
+    margin-right: 1rem;
+}
+
+/* Incident Title Group */
+.incident-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.incident-title-group h3 {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Incident Footer with Buttons */
+.incident-footer {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-secondary,
+.btn-success {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-secondary {
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(0, 212, 255, 0.2);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: rgba(81, 207, 102, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(81, 207, 102, 0.3);
+}
+
+.btn-success:hover {
+    background: rgba(81, 207, 102, 0.25);
+    box-shadow: 0 0 15px rgba(81, 207, 102, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: rgba(0, 212, 255, 0.03);
+    border: 2px dashed rgba(0, 212, 255, 0.15);
+    border-radius: 1rem;
+    margin: 2rem 0;
+}
+
+.empty-illustration {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    opacity: 0.7;
+}
+
+.empty-state h3 {
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Loading Skeleton */
+.incident-skeleton {
+    background: linear-gradient(90deg,
+            rgba(0, 212, 255, 0.1) 0%,
+            rgba(0, 212, 255, 0.2) 50%,
+            rgba(0, 212, 255, 0.1) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+    height: 150px;
+    border-radius: 1rem;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(138, 43, 226, 0.2));
+    border: 1px solid rgba(0, 212, 255, 0.5);
+    border-radius: 0.8rem;
+    padding: 1rem 1.5rem;
+    color: var(--text-primary);
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+    animation: slideInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 400px;
+}
+
+.toast.toast-success {
+    border-color: rgba(81, 207, 102, 0.5);
+}
+
+.toast.toast-error {
+    border-color: rgba(255, 0, 43, 0.5);
+}
+
+@keyframes slideOut {
+    to {
+        transform: translateY(120%);
+        opacity: 0;
+    }
+}
+
+/* Live Indicator Pulse */
+.pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(1.2);
+    }
+}
+
+/* Safety Score Level Badge Animation */
+.level-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: rgba(81, 207, 102, 0.15);
+    color: var(--success);
+    border-radius: 0.5rem;
+    font-weight: 600;
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+/* Predictions Loading Animation */
+.prediction-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.prediction-severity {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--warning);
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Ripple Effect on Button Click */
+@keyframes ripple {
+    from {
+        transform: scale(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+.btn-secondary::after,
+.btn-success::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+}
+
+/* Safety Score Circular Animation */
+#scoreCircle {
+    animation: scoreGlow 3s ease-in-out infinite;
+}
+
+@keyframes scoreGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 40px rgba(0, 212, 255, 0.6);
+    }
+}
+
+/* Incident Card with Severity Color */
+.incident-card.severity-high {
+    border-left: 4px solid var(--danger);
+}
+
+.incident-card.severity-medium {
+    border-left: 4px solid var(--warning);
+}
+
+.incident-card.severity-low {
+    border-left: 4px solid var(--success);
+}
+
+/* Dashboard Header Subtle Animation */
+.dashboard-header {
+    animation: fadeInDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stats Cards Animation */
+.stat-card {
+    animation: fadeInScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+}
+
+.stat-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.stat-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.stat-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.stat-card:nth-child(4) {
+    animation-delay: 0.4s;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
