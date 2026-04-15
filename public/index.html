@@ -463,6 +463,65 @@
         </div>
     </div>
 
+    <!-- AI Risk Details Modal -->
+    <div id="aiRiskModal" class="modal ai-risk-modal">
+        <div class="modal-content ai-risk-modal-content">
+            <button class="modal-close" onclick="closeAIRiskModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="risk-modal-header">
+                <div class="risk-modal-icon" id="riskModalIcon">⚠️</div>
+                <div>
+                    <h2 id="riskModalTitle">Risk Title</h2>
+                    <div class="risk-modal-severity" id="riskModalSeverity">HIGH</div>
+                </div>
+            </div>
+
+            <div class="risk-modal-section">
+                <h3 class="risk-modal-subtitle">
+                    <i class="fas fa-lightbulb"></i> Why This Risk Exists
+                </h3>
+                <p id="riskModalExplanation" class="risk-modal-text">
+                    Explanation text will appear here
+                </p>
+            </div>
+
+            <div class="risk-modal-section">
+                <h3 class="risk-modal-subtitle">
+                    <i class="fas fa-shield-alt"></i> Step-by-Step Precautions
+                </h3>
+                <ol id="riskModalPrecautions" class="risk-modal-list">
+                    <li>Precaution 1</li>
+                    <li>Precaution 2</li>
+                </ol>
+            </div>
+
+            <div class="risk-modal-section">
+                <h3 class="risk-modal-subtitle">
+                    <i class="fas fa-phone-alt"></i> Emergency Contacts
+                </h3>
+                <div class="emergency-contacts">
+                    <button onclick="callEmergency('112')" class="contact-btn">
+                        <i class="fas fa-phone"></i> Emergency: 112
+                    </button>
+                    <button onclick="callEmergency('101')" class="contact-btn">
+                        <i class="fas fa-fire"></i> Fire: 101
+                    </button>
+                    <button onclick="callEmergency('108')" class="contact-btn">
+                        <i class="fas fa-ambulance"></i> Ambulance: 108
+                    </button>
+                </div>
+            </div>
+
+            <div class="risk-modal-footer">
+                <button class="btn-got-it" onclick="closeAIRiskModal()">
+                    <i class="fas fa-check"></i> Got it
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script src="js/app.js"></script>
     <script src="js/dashboard.js"></script>
