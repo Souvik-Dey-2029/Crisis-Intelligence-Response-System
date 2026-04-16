@@ -19,26 +19,65 @@ async function sendChatMessage() {
         const languageSelect = document.getElementById('languageSelect');
         const language = languageSelect ? languageSelect.value : 'en';
 
+        console.log(`📤 [CHAT] Sending to ${API_BASE_URL}/chat (Language: ${language})`);
+
+        // Create abort controller for timeout (30 seconds)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
         const response = await fetch(`${API_BASE_URL}/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, language })
+            body: JSON.stringify({ message, language }),
+            signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
+
+        console.log(`📥 [CHAT] Response status:`, response.status);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
         const data = await response.json();
 
-        if (response.ok && data.success) {
+        console.log(`✅ [CHAT] Data received:`, data.success ? 'Success' : 'Failed');
+
+        if (data.success && data.response) {
             addChatMessage(data.response, 'bot');
-        } else if (data.error === 'AI service unavailable') {
-            showToast('AI temporarily unavailable', 'warning');
-            addChatMessage(`⚠️ ${data.message}`, 'bot');
+            // Show which provider was used
+            if (data.providers) {
+                console.log(`🤖 [AI] Providers available:`, data.providers.join(', '));
+            }
+        } else if (data.error) {
+            console.error(`❌ [CHAT] Error:`, data.error, data.message);
+            addChatMessage(`⚠️ ${data.message || 'Unable to get response'}`, 'bot');
         } else {
-            addChatMessage(`Error: ${data.message || 'Unknown error'}`, 'bot');
+            console.error(`❌ [CHAT] Unexpected response format:`, data);
+            addChatMessage('⚠️ Unexpected response format', 'bot');
         }
     } catch (error) {
-        console.error('Error:', error);
+        if (error.name === 'AbortError') {
+            console.error('❌ [CHAT] Request timeout (30s)');
+            addChatMessage('🔴 Request timed out. Gemini API is slow or unavailable.', 'bot');
+        } else {
+            console.error('❌ [CHAT] Network error:', error.message);
+            console.log('📍 [DEBUG] API URL:', `${API_BASE_URL}/chat`);
+            console.log('📍 [DEBUG] Host:', window.location.origin);
+
+            // Provide helpful error message
+            let errorMsg = '🔴 Connection error. ';
+            if (error.message.includes('Failed to fetch')) {
+                errorMsg += 'CORS or network issue. Check browser console.';
+            } else if (error.message.includes('JSON')) {
+                errorMsg += 'Invalid response from server.';
+            } else {
+                errorMsg += error.message;
+            }
+            addChatMessage(errorMsg, 'bot');
+        }
         showToast('AI temporarily unavailable', 'warning');
-        addChatMessage('🔴 Connection error. Gemini API is not available.', 'bot');
     } finally {
         showLoading(false);
     }
