@@ -14,12 +14,35 @@ import classificationRoutes from './api/routes/classification.js';
 import chatRoutes from './api/routes/chat.js';
 import voiceRoutes from './api/routes/voice.js';
 import nearbyRoutes from './api/routes/nearby.js';
+import aiRoutes from './api/routes/ai.js';
 
 // Import validation utilities
 import { validateEnvironment, getAIStatus } from './utils/validateEnv.js';
 
-// Load environment variables (MUST be before any env var access)
-dotenv.config();
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
+
+// Load environment variables from project root (MUST be before any env var access)
+// Override system environment variables with .env file
+const envConfig = dotenv.config({ path: path.join(projectRoot, '.env'), override: true });
+
+// Debug: Show what was loaded
+if (envConfig.parsed) {
+    console.log('\n✅ [DOTENV] Loaded .env variables:');
+    if (envConfig.parsed.GROQ_MODEL) {
+        console.log(`   GROQ_MODEL from .env: ${envConfig.parsed.GROQ_MODEL}`);
+    }
+}
+
+// Force override any system environment variables with .env values
+if (envConfig.parsed) {
+    Object.keys(envConfig.parsed).forEach(key => {
+        process.env[key] = envConfig.parsed[key];
+    });
+    console.log('✅ [DOTENV] Forced all .env values into process.env\n');
+}
 
 // Validate environment on startup
 validateEnvironment();
@@ -27,10 +50,6 @@ validateEnvironment();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-
-// Get __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // ==================== ENVIRONMENT VALIDATION ====================
 
@@ -90,6 +109,7 @@ app.use('/api/classification', classificationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/api/nearby', nearbyRoutes);
+app.use('/api/ai', aiRoutes);
 
 // ==================== SERVE FRONTEND ====================
 
