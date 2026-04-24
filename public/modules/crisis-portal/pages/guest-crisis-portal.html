@@ -585,7 +585,8 @@
   <script type="module">
 
     // ===== CONFIG =====
-    const AI_ENDPOINT = '/api/chat';
+    const BASE_URL = window.location.origin;
+    const AI_ENDPOINT = `${BASE_URL}/api/chat`;
 
     // ===== AI SERVICE =====
     async function askAI(message) {
