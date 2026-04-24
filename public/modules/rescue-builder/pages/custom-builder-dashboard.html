@@ -113,15 +113,13 @@
             <div class="h-4 w-[1px] bg-outline-variant/30 hidden md:block"></div>
             <div class="hidden md:flex gap-6">
                 <a class="text-[#ffb3ae] font-bold glow-sm font-['Space_Grotesk'] tracking-widest uppercase text-xs transition-all hover:scale-105"
-                    href="#">Overview</a>
-                <a class="text-slate-400 font-medium font-['Space_Grotesk'] tracking-widest uppercase text-xs hover:text-slate-200 transition-all hover:scale-105"
-                    href="#">Operations</a>
+                    href="#dashboardSummary" onclick="scrollToOverview(event)">Overview</a>
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <button
+            <button onclick="jumpToNotifications()"
                 class="material-symbols-outlined text-slate-400 hover:text-primary transition-all duration-200 p-2 hover:bg-primary/10 rounded-full">notifications</button>
-            <button
+            <button onclick="openBuilderSettings()"
                 class="material-symbols-outlined text-slate-400 hover:text-primary transition-all duration-200 p-2 hover:bg-primary/10 rounded-full">settings</button>
             <button onclick="window.location.href='/pages/module-selection.html'"
                 class="bg-gradient-to-r from-primary-container to-primary text-on-primary-container px-6 py-2 rounded-lg font-headline font-bold text-xs tracking-widest uppercase flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary-container/20">
@@ -148,29 +146,9 @@
         </div>
         <nav class="flex-1 px-2">
             <a class="flex items-center gap-4 bg-gradient-to-r from-[#ff5352]/20 to-transparent text-[#ffb3ae] border-l-4 border-[#ffb3ae] py-3 px-6 mb-2 font-['Space_Grotesk'] tracking-wide uppercase text-[10px] transition-all translate-x-1"
-                href="#">
+                href="#dashboardSummary" onclick="scrollToOverview(event)">
                 <span class="material-symbols-outlined">dashboard</span>
                 <span>Overview</span>
-            </a>
-            <a class="flex items-center gap-4 text-slate-500 py-3 px-6 mb-2 hover:text-slate-200 font-['Space_Grotesk'] tracking-wide uppercase text-[10px] hover:bg-[#ffffff]/5 transition-all"
-                href="#">
-                <span class="material-symbols-outlined">emergency</span>
-                <span>Deployments</span>
-            </a>
-            <a class="flex items-center gap-4 text-slate-500 py-3 px-6 mb-2 hover:text-slate-200 font-['Space_Grotesk'] tracking-wide uppercase text-[10px] hover:bg-[#ffffff]/5 transition-all"
-                href="#">
-                <span class="material-symbols-outlined">local_shipping</span>
-                <span>Logistics</span>
-            </a>
-            <a class="flex items-center gap-4 text-slate-500 py-3 px-6 mb-2 hover:text-slate-200 font-['Space_Grotesk'] tracking-wide uppercase text-[10px] hover:bg-[#ffffff]/5 transition-all"
-                href="#">
-                <span class="material-symbols-outlined">analytics</span>
-                <span>Analytics</span>
-            </a>
-            <a class="flex items-center gap-4 text-slate-500 py-3 px-6 mb-2 hover:text-slate-200 font-['Space_Grotesk'] tracking-wide uppercase text-[10px] hover:bg-[#ffffff]/5 transition-all"
-                href="#">
-                <span class="material-symbols-outlined">terminal</span>
-                <span>Protocol</span>
             </a>
             <a class="flex items-center gap-4 text-slate-500 py-3 px-6 mb-2 hover:text-[#ddb7ff] font-['Space_Grotesk'] tracking-wide uppercase text-[10px] hover:bg-[#ffffff]/5 transition-all cursor-pointer"
                 onclick="window.location.href='/pages/sql-module.html'">
@@ -240,41 +218,6 @@
             <div id="systemsList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
         </div>
     </main>
-    <!-- Notifications Hub (Bottom Right) -->
-    <div class="fixed bottom-8 right-8 z-[60] flex flex-col gap-4 max-w-sm w-full pointer-events-none">
-        <!-- Warning Toast -->
-        <div
-            class="pointer-events-auto bg-[#ff9800]/10 backdrop-blur-xl border border-[#ff9800]/30 rounded-lg p-4 shadow-2xl flex items-start gap-4 translate-x-0 transition-transform hover:-translate-y-1">
-            <div class="bg-[#ff9800] text-on-surface p-1.5 rounded flex items-center justify-center">
-                <span class="material-symbols-outlined text-lg">warning</span>
-            </div>
-            <div class="flex-1">
-                <div class="flex justify-between items-center mb-1">
-                    <h4 class="text-xs font-headline font-bold text-[#ff9800] uppercase tracking-wider">System Alert
-                    </h4>
-                    <span class="text-[9px] text-[#ff9800]/60 uppercase">Critical</span>
-                </div>
-                <p class="text-sm text-on-surface font-medium">Please configure your API key to enable operational data
-                    streams.</p>
-            </div>
-        </div>
-        <!-- Info Toast -->
-        <div
-            class="pointer-events-auto bg-secondary/10 backdrop-blur-xl border border-secondary/30 rounded-lg p-4 shadow-2xl flex items-start gap-4 translate-x-0 transition-transform hover:-translate-y-1">
-            <div class="bg-secondary text-on-secondary p-1.5 rounded flex items-center justify-center">
-                <span class="material-symbols-outlined text-lg">build</span>
-            </div>
-            <div class="flex-1">
-                <div class="flex justify-between items-center mb-1">
-                    <h4 class="text-xs font-headline font-bold text-secondary uppercase tracking-wider">System Ready
-                    </h4>
-                    <span class="text-[9px] text-secondary/60 uppercase">Deployment</span>
-                </div>
-                <p class="text-sm text-on-surface font-medium">Custom Rescue Builder initialized and ready for
-                    deployment.</p>
-            </div>
-        </div>
-    </div>
     <!-- Decorative Corner Accents -->
     <div class="fixed top-0 right-0 w-32 h-32 pointer-events-none opacity-20">
         <svg class="w-full h-full fill-none stroke-outline-variant" viewbox="0 0 100 100">
@@ -460,6 +403,19 @@
         function openSystem(systemID) {
             localStorage.setItem('active_system_id', systemID);
             window.location.href = `/modules/rescue-builder/index.html?systemID=${encodeURIComponent(systemID)}`;
+        }
+
+        function scrollToOverview(event) {
+            event.preventDefault();
+            document.getElementById('dashboardSummary')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function jumpToNotifications() {
+            document.getElementById('dashboardSummary')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function openBuilderSettings() {
+            window.location.href = '/modules/rescue-builder/pages/custom-builder-org-select.html';
         }
 
         function deleteSystem(systemID) {
