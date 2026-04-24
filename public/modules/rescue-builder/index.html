@@ -38,7 +38,9 @@
         <div class="rescue-content">
             <div class="control-panel-container">
                 <div class="panel-header">
+                    <div class="panel-eyebrow">Live Module Access</div>
                     <h1>System Control Panel</h1>
+                    <p class="panel-subtitle">Manage this organization's emergency operations from one place.</p>
                     <div id="panel-system-info" class="panel-info">
                         <div class="info-line">
                             <span class="label">Loading...</span>
@@ -49,12 +51,16 @@
 
                 <div class="panel-actions">
                     <button class="btn-large btn-primary" onclick="accessAdminDashboard()">
-                        👨‍💼 Open Admin Panel
+                        <span class="action-icon">🧑‍💼</span>
+                        <span>Open Admin Panel</span>
                     </button>
                     <button class="btn-large btn-secondary" onclick="accessUserDashboard()">
-                        👥 Open User Panel
+                        <span class="action-icon">👥</span>
+                        <span>Open User Panel</span>
                     </button>
                 </div>
+
+                <div class="panel-footnote">Role access is audited and synced with your active system profile.</div>
             </div>
         </div>
     </div>
