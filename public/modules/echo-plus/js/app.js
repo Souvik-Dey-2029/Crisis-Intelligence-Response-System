@@ -4,7 +4,9 @@
 // NOTE: API keys & credentials removed - handled by backend
 // This module is production-ready for integration into ResQAI
 
-const ADMIN_PASS = 'echo2024'; // DEMO ONLY - Replace with backend auth
+// SECURITY: Admin authentication moved to backend
+// Use /api/echo-plus/admin-login endpoint instead
+const USE_BACKEND_AUTH = true;
 
 
 let state = {
@@ -160,15 +162,15 @@ let trackingInterval = null;
 function initAllGuestPositions() {
   if (!state.selectedHotel) return;
   state.guestPositions = {};
-  
+
   state.selectedHotel.rooms.forEach(room => {
     if (room.status === 'occupied') {
       const floorInfo = { '6': 20, '5': 68, '4': 116, '3': 164, '2': 212, '1': 260 };
       const roomsOnFloor = state.selectedHotel.rooms.filter(r => r.floor === room.floor);
       const idx = roomsOnFloor.indexOf(room);
-      const adminX = 80 + idx * 58 + 25; 
+      const adminX = 80 + idx * 58 + 25;
       const adminY = floorInfo[room.floor.toString()] + 16 + 8;
-      
+
       state.guestPositions[room.roomNumber] = {
         x: adminX, y: adminY, floor: room.floor, status: 'static', roomX: adminX, roomY: adminY
       };
@@ -228,7 +230,7 @@ function goGuestLogin() {
 
   if (hotelName) hotelName.textContent = state.selectedHotel.name;
   if (hotelLoc) hotelLoc.textContent = `${state.selectedHotel.city}, ${state.selectedHotel.country}`;
- 
+
   show('screen-guest-login');
 }
 function goGuestSelectFromLogin() { show('screen-guest-select'); }
@@ -242,7 +244,7 @@ function renderNearbyStaff() {
 
   const guestFloor = state.guestObj.floor || 1;
   const staffData = ECHO_DATA.staff;
-  
+
   // Sort by simulated distance
   const nearby = staffData.map(s => {
     const sFloor = getFloorFromZone(s.assignedZone);
@@ -287,7 +289,7 @@ function initiateStaffContact(name, type) {
     chatSection.style.border = '1px solid var(--blue)';
     setTimeout(() => chatSection.style.border = '', 2000);
   }
-  
+
   if (type === 'voice') {
     startVoiceRecording('guest');
   } else {
@@ -297,7 +299,7 @@ function initiateStaffContact(name, type) {
       input.focus();
     }
   }
-  
+
   addChatMessage({
     role: 'system',
     text: `System: Initiating ${type} contact with ${name}...`,
@@ -347,10 +349,10 @@ function guestLogin() {
   const err = $('login-error');
   err.classList.remove('show');
 
-  if (!name || !room || !code) { 
-    err.textContent = 'Please fill in all fields.'; 
-    err.classList.add('show'); 
-    return; 
+  if (!name || !room || !code) {
+    err.textContent = 'Please fill in all fields.';
+    err.classList.add('show');
+    return;
   }
 
   if (!state.selectedHotel) {
@@ -367,10 +369,10 @@ function guestLogin() {
     r.status === 'occupied'
   );
 
-  if (!found) { 
-    err.textContent = 'Invalid room or secret code. Please try again.'; 
-    err.classList.add('show'); 
-    return; 
+  if (!found) {
+    err.textContent = 'Invalid room or secret code. Please try again.';
+    err.classList.add('show');
+    return;
   }
 
   // Allow name override for demo
@@ -404,7 +406,7 @@ function showGuestDashboard() {
     instructionCard.innerHTML = 'No emergency active. Have a pleasant stay. In case of emergency, follow the voice instructions.';
   }
   state.lastInstruction = '';
-  
+
   if ($('guest-speak-btn')) $('guest-speak-btn').style.display = 'inline-block';
   $('screen-guest-dashboard').style.backgroundColor = ''; // Reset dimming
 
@@ -423,7 +425,7 @@ function setGuestStatus(type, title, message) {
   const statusCard = $('gdash-status-card');
   const statusTitle = $('gdash-status-title');
   const statusMsg = $('gdash-status-msg');
-  
+
   if (statusCard) {
     statusCard.classList.remove('normal', 'danger', 'warning', 'alert');
     statusCard.classList.add(type);
@@ -573,7 +575,7 @@ function fallbackInstructions(type, lang) {
 
 function displayInstruction(text, target) {
   state.lastInstruction = text;
-  
+
   // Parse text into steps if it looks like a list or has multiple lines
   let steps = [];
   if (text.includes('\n')) {
@@ -591,7 +593,7 @@ function displayInstruction(text, target) {
     renderGuestStepsUI();
     renderGuestMapDynamic();
   }
-  
+
   if (target === 'admin' || target === 'both') {
     if ($('admin-ai-text')) $('admin-ai-text').textContent = text;
   }
@@ -629,12 +631,12 @@ function repeatInstruction() {
 // AI REAL-TIME VOICE CALL
 // ============================================================
 function startAICall() {
-  if (state.aiCallActive) return; 
+  if (state.aiCallActive) return;
   if (!window.ResQAICall) {
     console.error("ResQAICall class not found");
     return;
   }
-  
+
   // UI Toggling
   const standby = $('ai-standby-content');
   const activeUI = $('ai-active-call-ui');
@@ -642,37 +644,37 @@ function startAICall() {
 
   if (standby) standby.style.display = 'none';
   if (activeUI) activeUI.style.display = 'flex';
-  
+
   if (transcript) {
     transcript.textContent = 'Connecting to ResQ AI...';
     transcript.style.color = 'var(--text2)';
   }
 
   state.aiCallActive = true;
-  
+
   state.aiCallSystem = new window.ResQAICall({
     lang: state.lang || 'en',
-    incident: state.currentEmergency, 
+    incident: state.currentEmergency,
     guestName: state.guestName || "Guest",
     instructionSteps: state.instructionSteps || [],
     position: state.guestObj ? { floor: state.guestObj.floor, room: state.guestObj.roomNumber, zone: state.guestObj.zone } : { floor: 1, room: "000", zone: "Unknown" },
     onStatus: (status) => {
-        const stat = $('aicall-status');
-        const aiThink = $('ai-think-guest');
-        if (!stat) return;
-        
-        stat.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-        if (aiThink) aiThink.style.display = (status === 'thinking') ? 'inline-flex' : 'none';
+      const stat = $('aicall-status');
+      const aiThink = $('ai-think-guest');
+      if (!stat) return;
+
+      stat.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+      if (aiThink) aiThink.style.display = (status === 'thinking') ? 'inline-flex' : 'none';
     },
     onTranscript: (speaker, text) => {
-        if (!transcript) return;
-        transcript.textContent = `${speaker}: ${text}`;
-        transcript.scrollTop = transcript.scrollHeight;
+      if (!transcript) return;
+      transcript.textContent = `${speaker}: ${text}`;
+      transcript.scrollTop = transcript.scrollHeight;
     },
     onAlertAdmin: (msg) => {
-        if (typeof window.receiveAdminAlert === 'function') {
-            window.receiveAdminAlert(msg);
-        }
+      if (typeof window.receiveAdminAlert === 'function') {
+        window.receiveAdminAlert(msg);
+      }
     },
     onEnd: (history) => {
       state.aiCallActive = false;
@@ -685,15 +687,15 @@ function startAICall() {
   // Duration Timer Update
   const durationEl = $('aicall-duration');
   if (durationEl) {
-      const timer = setInterval(() => {
-          if (!state.aiCallActive) {
-              clearInterval(timer);
-              return;
-          }
-          if (state.aiCallSystem) {
-              durationEl.textContent = state.aiCallSystem.getCallDuration();
-          }
-      }, 1000);
+    const timer = setInterval(() => {
+      if (!state.aiCallActive) {
+        clearInterval(timer);
+        return;
+      }
+      if (state.aiCallSystem) {
+        durationEl.textContent = state.aiCallSystem.getCallDuration();
+      }
+    }, 1000);
   }
 
   state.aiCallSystem.start();
@@ -708,14 +710,14 @@ function endAICall() {
 }
 window.endAICall = endAICall;
 
-window.receiveAdminAlert = function(msg) {
+window.receiveAdminAlert = function (msg) {
   const feed = document.getElementById('admin-notif-feed');
   if (!feed) return;
-  
+
   if (feed.innerText.includes('All clear')) {
     feed.innerHTML = '';
   }
-  
+
   const alertEl = document.createElement('div');
   alertEl.style.padding = '12px';
   alertEl.style.marginBottom = '8px';
@@ -725,9 +727,9 @@ window.receiveAdminAlert = function(msg) {
   const roomNum = state.guestObj ? state.guestObj.roomNumber : 'Unknown';
   alertEl.innerHTML = `<div style="font-size:11px;color:#ef4444;margin-bottom:4px;font-weight:bold;">🚨 AI ALERT (Room ${roomNum})</div>
                        <div style="font-size:13px;color:#fff;">${msg}</div>`;
-                       
+
   feed.prepend(alertEl);
-  
+
   const countObj = document.getElementById('admin-alert-count');
   if (countObj) {
     countObj.innerText = parseInt(countObj.innerText || 0) + 1;
@@ -833,10 +835,10 @@ function renderGuestMap(floor, emergency) {
     }
 
     const points = [
-      {x: startX, y: startY},
-      {x: startX, y: corridorY},
-      {x: endX, y: corridorY},
-      {x: endX, y: 130}
+      { x: startX, y: startY },
+      { x: startX, y: corridorY },
+      { x: endX, y: corridorY },
+      { x: endX, y: 130 }
     ];
 
     html += `
@@ -857,7 +859,7 @@ function renderGuestMap(floor, emergency) {
              <circle cx="${endX}" cy="130" r="8" fill="#ffffff" filter="url(#glow-static)">
                 <animate attributeName="r" values="6;10;6" dur="1s" repeatCount="indefinite" />
              </circle>`;
-             
+
     // Draw arrows along segments
     for (let i = 0; i < points.length - 1; i++) {
       const p1 = points[i];
@@ -879,12 +881,12 @@ function renderGuestMap(floor, emergency) {
              </path>
           </g>
         `;
-    }
+      }
     }
   } else if (userRoomData) {
     const startX = userRoomData.x + userRoomData.w / 2;
     const startY = userRoomData.y === 20 ? 80 : 180;
-    
+
     html += `
       <g filter="url(#glow-static)">
         <circle cx="${startX}" cy="${startY}" r="6" fill="#ffffff">
@@ -994,13 +996,13 @@ function updateAdminMap(emergency) {
   if (emergency) {
     const ey = 25 + (6 - emergency.floor) * 48 + 24;
     let dangerIdx = emergency.roomNumber ? parseInt(emergency.roomNumber.slice(-2)) - 1 : 2;
-    if(dangerIdx < 0) dangerIdx = 0;
-    if(dangerIdx > 7) dangerIdx = 7;
+    if (dangerIdx < 0) dangerIdx = 0;
+    if (dangerIdx > 7) dangerIdx = 7;
     let dangerX = 80 + dangerIdx * 58 + 25;
-    
+
     html += `
       <polyline points="${dangerX},${ey} 45,${ey} 45,300" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" class="admin-evac-anim" filter="url(#glow-admin)"/>
-      <polyline points="${dangerX},${ey} ${W-45},${ey} ${W-45},300" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" class="admin-evac-anim" filter="url(#glow-admin)"/>
+      <polyline points="${dangerX},${ey} ${W - 45},${ey} ${W - 45},300" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" class="admin-evac-anim" filter="url(#glow-admin)"/>
     `;
   }
 
@@ -1011,7 +1013,7 @@ function updateAdminMap(emergency) {
     let off = 0;
     function anim() {
       const paths = svg.querySelectorAll('.admin-evac-anim');
-      if(paths.length > 0) {
+      if (paths.length > 0) {
         off = (off - 1) % 10;
         paths.forEach(p => p.setAttribute('stroke-dashoffset', off));
       }
@@ -1137,26 +1139,26 @@ function showToast(type, title, msg) {
 function clearEmergency() {
   if (state.stepInterval) clearInterval(state.stepInterval);
   if (window.speechSynthesis) window.speechSynthesis.cancel();
-  
+
   state.currentEmergency = null;
   state.instructionSteps = [];
   state.currentStepIndex = 0;
   state.isDimmed = false;
   $('screen-guest-dashboard').style.backgroundColor = '';
-  
+
   document.querySelectorAll('.trigger-btn').forEach(b => b.classList.remove('active-emergency'));
   if ($('admin-status-text')) {
     $('admin-status-text').textContent = 'OPERATIONAL';
     $('admin-status-text').style.color = 'var(--medical)';
   }
   if ($('admin-ai-text')) $('admin-ai-text').textContent = 'No active emergency. All systems nominal.';
-  
+
   updateAdminMap(null);
   updateStaffPanel();
   addTimeline('info', 'All-clear declared');
   addNotification('info', '✅ All clear — Emergency protocols deactivated');
   renderAdminNotifications();
-  
+
   if (state.guestObj) {
     setGuestStatus('normal', '✅ All Clear', 'Emergency deactivated. All systems normal. You are safe.');
     const inst = $('gdash-instruction');
@@ -1238,11 +1240,11 @@ function guestTriggerEmergency(type) {
 function startGuestSimulation(scenario) {
   if (state.stepInterval) clearInterval(state.stepInterval);
   if (window.speechSynthesis) window.speechSynthesis.cancel();
-  
+
   // Dim background for focus
   state.isDimmed = true;
   $('screen-guest-dashboard').style.backgroundColor = '#07070a';
-  
+
   // 1. Generate Instructions Logic
   const type = scenario.type;
   const lang = state.lang;
@@ -1280,7 +1282,7 @@ function startGuestSimulation(scenario) {
 
   state.instructionSteps = steps;
   state.currentStepIndex = 0;
-  
+
   // Hide standard manual speak button since simulation runs automatically
   if ($('guest-speak-btn')) $('guest-speak-btn').style.display = 'none';
 
@@ -1290,7 +1292,7 @@ function startGuestSimulation(scenario) {
   // Render initial step UI & map
   renderGuestStepsUI();
   renderGuestMapDynamic();
-  
+
   // Initial voice
   if (steps.length > 0) {
     playCurrentStep();
@@ -1300,10 +1302,10 @@ function startGuestSimulation(scenario) {
 function playCurrentStep() {
   const stepText = state.instructionSteps[state.currentStepIndex];
   if (!stepText) return;
-  
+
   renderGuestStepsUI();
   renderGuestMapDynamic();
-  
+
   if (state.aiCallSystem && state.aiCallActive) {
     const prompt = `I have just reached Step ${state.currentStepIndex + 1}: ${stepText}. What should I do next?`;
     state.aiCallSystem._processAndRespond(prompt);
@@ -1313,7 +1315,7 @@ function playCurrentStep() {
 }
 
 // Global functions for inline HTML onClick handlers
-window.nextStep = function() {
+window.nextStep = function () {
   if (state.currentStepIndex < state.instructionSteps.length - 1) {
     state.currentStepIndex++;
     if (state.stepInterval && state.isAutoMode) {
@@ -1324,10 +1326,10 @@ window.nextStep = function() {
   }
 }
 
-window.toggleAutoMode = function() {
+window.toggleAutoMode = function () {
   state.isAutoMode = !state.isAutoMode;
   renderGuestStepsUI();
-  
+
   if (state.isAutoMode) {
     startAutoWait();
   } else {
@@ -1353,18 +1355,18 @@ function startAutoWait() {
 function renderGuestStepsUI() {
   const container = $('gdash-instruction');
   if (!container) return;
-  
+
   const stepsHTML = state.instructionSteps.map((step, index) => {
     const isActive = index === state.currentStepIndex;
     const isPast = index < state.currentStepIndex;
-    
+
     // Dynamic styles inline based on step status
     const bg = isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent';
     const border = isActive ? '1.5px solid #3b82f6' : '1px solid #1f2937';
     const opacity = isPast ? '0.5' : '1';
     const transform = isActive ? 'scale(1.02)' : 'scale(1)';
     const shadow = isActive ? '0 0 15px rgba(59, 130, 246, 0.2)' : 'none';
-    
+
     return `
       <div onclick="goToStep(${index})" style="display: flex; align-items: center; padding: 12px; margin-bottom: 10px; 
                   background: ${bg}; border: ${border}; opacity: ${opacity};
@@ -1385,7 +1387,7 @@ function renderGuestStepsUI() {
       </div>
     `;
   }).join('');
-  
+
   const controlsHTML = `
     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #1f2937;">
       <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -1416,28 +1418,28 @@ function renderGuestStepsUI() {
       </div>
     </div>
   `;
-  
+
   container.innerHTML = `<div style="display:flex; flex-direction:column; gap:4px;">${stepsHTML}</div>${controlsHTML}`;
 }
 
-window.goToStep = function(idx) {
+window.goToStep = function (idx) {
   state.currentStepIndex = idx;
   playCurrentStep();
 }
 
-window.sendGuidanceInteraction = async function() {
+window.sendGuidanceInteraction = async function () {
   const input = $('guidance-interactive-input');
   const val = input.value.trim();
   if (!val) return;
-  
+
   input.value = '';
   input.placeholder = 'Thinking...';
-  
+
   // If no AI call is active, start one silently to get response or just use the API
   if (!state.aiCallSystem || !state.aiCallActive) {
     const scenario = state.currentEmergency || { type: 'other', floor: 1, roomNumber: 'Unknown', description: 'Interactive help needed' };
     const guestContext = state.guestObj ? { isNearby: true, floor: state.guestObj.floor, zone: state.guestObj.zone } : null;
-    
+
     try {
       const responseText = await window.EchoPlusAI.getGuidance(scenario, guestContext, state.lang);
       displayInstruction(responseText, 'guest');
@@ -1455,26 +1457,26 @@ window.sendGuidanceInteraction = async function() {
 function speakInstructionDirectly(text, lang) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  
+
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.9; 
+  utterance.rate = 0.9;
   utterance.pitch = 1.0;
-  
+
   if (lang === 'bn') utterance.lang = 'bn-IN';
   else if (lang === 'hi') utterance.lang = 'hi-IN';
   else utterance.lang = 'en-US';
-  
+
   const voices = window.speechSynthesis.getVoices();
   const GoogleVoice = voices.find(v => v.lang === utterance.lang && v.name.includes("Google"));
   if (GoogleVoice) utterance.voice = GoogleVoice;
-  
+
   window.speechSynthesis.speak(utterance);
 }
 
 function renderGuestMapDynamic() {
   const svg = $('guest-map-svg');
   if (!svg || !state.currentEmergency) return;
-  
+
   const W = 600, H = 280;
   const floor = state.guestObj ? state.guestObj.floor : 2;
   const emergency = state.currentEmergency;
@@ -1541,19 +1543,19 @@ function renderGuestMapDynamic() {
   if (dangerRoom) dangerX = dangerRoom.x + dangerRoom.w / 2;
   else if (emergency?.zone === 'east') dangerX = W * 0.75;
   else if (emergency?.zone === 'west') dangerX = W * 0.25;
-  
+
   let endX = dangerX < startX ? W - 45 : 45;
 
   // Render Rooms with Enhanced Style
   rooms.forEach((r) => {
     const isDanger = r.label === emergency?.roomNumber;
     const isUser = r.label === (state.guestObj?.roomNumber || '');
-    
+
     let fill = "#1e293b";
     let stroke = "#334155";
     let filter = "";
     let opacity = 0.6;
-    
+
     if (isDanger) {
       fill = "rgba(239, 68, 68, 0.15)";
       stroke = "#ef4444";
@@ -1565,7 +1567,7 @@ function renderGuestMapDynamic() {
       filter = "url(#glow-room)";
       opacity = 1;
     }
-    
+
     html += `
       <g opacity="${opacity}">
         <rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="${isUser || isDanger ? 2 : 1}" filter="${filter}"/>
@@ -1577,12 +1579,12 @@ function renderGuestMapDynamic() {
   // Exits
   const exitA = { x: 25, y: 210, w: 60, h: 40, label: "EXIT A" };
   const exitB = { x: W - 85, y: 210, w: 60, h: 40, label: "EXIT B" };
-  
+
   [exitA, exitB].forEach(ex => {
     html += `
       <rect x="${ex.x}" y="${ex.y}" width="${ex.w}" height="${ex.h}" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1.5" opacity="0.8"/>
-      <text x="${ex.x + ex.w/2}" y="${ex.y + 18}" text-anchor="middle" fill="#10b981" font-size="9" font-family="'Syne', sans-serif" font-weight="bold">${ex.label}</text>
-      <text x="${ex.x + ex.w/2}" y="${ex.y + 30}" text-anchor="middle" fill="#10b981" font-size="8" font-family="sans-serif">STAIRS</text>
+      <text x="${ex.x + ex.w / 2}" y="${ex.y + 18}" text-anchor="middle" fill="#10b981" font-size="9" font-family="'Syne', sans-serif" font-weight="bold">${ex.label}</text>
+      <text x="${ex.x + ex.w / 2}" y="${ex.y + 30}" text-anchor="middle" fill="#10b981" font-size="8" font-family="sans-serif">STAIRS</text>
     `;
   });
 
@@ -1605,23 +1607,23 @@ function renderGuestMapDynamic() {
   const requiresEvac = emergency && (emergency.type === 'fire' || emergency.type === 'earthquake');
   if (requiresEvac) {
     const points = [
-      {x: startX, y: startY},
-      {x: startX, y: corridorY},
-      {x: endX, y: corridorY},
-      {x: endX, y: 210}
+      { x: startX, y: startY },
+      { x: startX, y: corridorY },
+      { x: endX, y: corridorY },
+      { x: endX, y: 210 }
     ];
-    
+
     // Calculate current visible path based on step index
     // Step 0: Leave room, Step 1: In corridor, Step 2: Walk to exit, Step 3: At stairs
     const currentPoints = points.slice(0, Math.min(state.currentStepIndex + 2, points.length));
-    
+
     if (currentPoints.length > 1) {
       const pathStr = currentPoints.map(p => `${p.x},${p.y}`).join(' ');
       html += `
         <polyline points="${pathStr}" fill="none" stroke="#60a5fa" stroke-width="5" stroke-dasharray="12 10" stroke-linecap="round" filter="url(#glow-room)" class="evac-path-main"/>
         <polyline points="${pathStr}" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="12 10" stroke-linecap="round" opacity="0.6" class="evac-path-main"/>
       `;
-      
+
       // Animated Arrows
       for (let i = 0; i < currentPoints.length - 1; i++) {
         const p1 = currentPoints[i];
@@ -1630,7 +1632,7 @@ function renderGuestMapDynamic() {
         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
         const dist = Math.hypot(dx, dy);
         const numArrows = Math.max(1, Math.floor(dist / 40));
-        
+
         for (let j = 1; j <= numArrows; j++) {
           const frac = j / (numArrows + 1);
           const ax = p1.x + dx * frac;
@@ -1644,7 +1646,7 @@ function renderGuestMapDynamic() {
         }
       }
     }
-    
+
     // User Current Location Pulse
     const activePoint = currentPoints[currentPoints.length - 1];
     html += `
@@ -1706,7 +1708,7 @@ const guestsRegistry = [
 
 function generateInstruction(guest, event) {
   const type = event.type;
-  
+
   if (type === 'fire') {
     if (guest.floor === event.floor) return { message: "Fire on your floor! Evacuate immediately via nearest stairs.", status: "DANGER", icon: "🔴" };
     if (guest.floor > event.floor) return { message: "Fire below you. Evacuate fast using emergency stairs.", status: "DANGER", icon: "🔴" };
@@ -1723,7 +1725,7 @@ function generateInstruction(guest, event) {
 
 function broadcastEmergency(event) {
   if (!event) event = { type: 'fire', floor: 2, zone: 'east' };
-  
+
   // Admin UI notification wrapper
   if (window.addNotification) addNotification(event.type, `🚨 ${event.type.toUpperCase()} alert affecting multiple guests.`);
   if (window.addTimeline) addTimeline(event.type, `Multi-User Broadcast Initiated`);
@@ -1739,14 +1741,14 @@ function broadcastEmergency(event) {
     setTimeout(() => {
       updateGuestCardStatus(guest.room, instruction);
       triggerVibration(guest.room);
-    }, 400 + (index * 600)); 
+    }, 400 + (index * 600));
 
     // Stagger the physical voices over time to prevent audio overlap 
     setTimeout(() => {
       if (window.speakInstructionDirectly) {
         speakInstructionDirectly(`Guest in Room ${guest.room}: ${instruction.message}`, 'en');
       }
-    }, 1000 + (index * 4000)); 
+    }, 1000 + (index * 4000));
   });
 
   return responses;
@@ -1754,8 +1756,8 @@ function broadcastEmergency(event) {
 
 function renderMultiGuestSimulatorUI() {
   const container = document.getElementById('multi-guest-container');
-  if(!container) return;
-  
+  if (!container) return;
+
   container.innerHTML = guestsRegistry.map(g => `
     <div id="gcard-${g.room}" style="padding:15px; margin-bottom:10px; background:var(--echo-glass); border-radius:8px; border:2px solid transparent; transition:0.3s; display:flex; align-items:center;">
        <div style="font-size:24px; margin-right:15px;">👤</div>
@@ -1771,11 +1773,11 @@ function updateGuestCardStatus(room, instruction) {
   const card = document.getElementById(`gcard-${room}`);
   const msgLabel = document.getElementById(`gmsg-${room}`);
   const iconLabel = document.getElementById(`gicon-${room}`);
-  
-  if(card && msgLabel && iconLabel) {
+
+  if (card && msgLabel && iconLabel) {
     msgLabel.innerText = instruction.message;
     iconLabel.innerText = instruction.icon;
-    
+
     if (instruction.status === "DANGER") {
       card.style.backgroundColor = "rgba(239, 68, 68, 0.1)"; // Red Glow
       card.style.borderColor = "#ef4444";
@@ -1790,7 +1792,7 @@ function updateGuestCardStatus(room, instruction) {
 
 function triggerVibration(room) {
   const card = document.getElementById(`gcard-${room}`);
-  if(card && card.animate) {
+  if (card && card.animate) {
     card.animate([
       { transform: 'translateX(0)' },
       { transform: 'translateX(-5px)' },
@@ -1807,91 +1809,91 @@ function triggerVibration(room) {
 let activeAICall = null;
 
 function toggleAICall() {
-    const btn = document.getElementById('aicall-btn');
-    const btnText = document.getElementById('aicall-btn-text');
-    const btnIcon = document.getElementById('aicall-btn-icon');
-    const card = document.getElementById('aicall-panel');
+  const btn = document.getElementById('aicall-btn');
+  const btnText = document.getElementById('aicall-btn-text');
+  const btnIcon = document.getElementById('aicall-btn-icon');
+  const card = document.getElementById('aicall-panel');
 
-    if (activeAICall && activeAICall.isActive) {
-        // End Call
-        activeAICall.end();
-        btn.classList.remove('active');
-        btnText.innerText = 'Start AI Call';
-        btnIcon.innerText = '📞';
-        card.classList.remove('active');
-    } else {
-        // Start Call
-        initiateAICall(state.currentEmergency?.type || 'general');
-    }
+  if (activeAICall && activeAICall.isActive) {
+    // End Call
+    activeAICall.end();
+    btn.classList.remove('active');
+    btnText.innerText = 'Start AI Call';
+    btnIcon.innerText = '📞';
+    card.classList.remove('active');
+  } else {
+    // Start Call
+    initiateAICall(state.currentEmergency?.type || 'general');
+  }
 }
 
 function initiateAICall(type = 'fire') {
-    if (activeAICall) activeAICall.end();
+  if (activeAICall) activeAICall.end();
 
-    const transcriptBox = document.getElementById('aicall-transcript-box');
-    const statusEl = document.getElementById('aicall-status');
-    const timerEl = document.getElementById('aicall-timer');
-    const btn = document.getElementById('aicall-btn');
-    const btnText = document.getElementById('aicall-btn-text');
-    const btnIcon = document.getElementById('aicall-btn-icon');
-    const card = document.getElementById('aicall-panel');
+  const transcriptBox = document.getElementById('aicall-transcript-box');
+  const statusEl = document.getElementById('aicall-status');
+  const timerEl = document.getElementById('aicall-timer');
+  const btn = document.getElementById('aicall-btn');
+  const btnText = document.getElementById('aicall-btn-text');
+  const btnIcon = document.getElementById('aicall-btn-icon');
+  const card = document.getElementById('aicall-panel');
 
-    // Reset UI
-    transcriptBox.innerHTML = '';
-    btn.classList.add('active');
-    btnText.innerText = 'End AI Call';
-    btnIcon.innerText = '📵';
-    card.classList.add('active');
+  // Reset UI
+  transcriptBox.innerHTML = '';
+  btn.classList.add('active');
+  btnText.innerText = 'End AI Call';
+  btnIcon.innerText = '📵';
+  card.classList.add('active');
 
-    activeAICall = new window.ResQAICall({
-        lang: state.lang || 'en',
-        guestName: state.guestObj?.name || 'Guest',
-        incident: { type: type },
-        position: {
-            floor: state.guestObj?.floor || 1,
-            room: state.guestObj?.roomNumber || '101',
-            zone: state.guestObj?.zone || 'North'
-        },
-        onStatus: (status) => {
-            statusEl.innerText = status.toUpperCase();
-            if (status === 'connected') {
-                // Start timer updates
-                const timerInt = setInterval(() => {
-                    if (!activeAICall || !activeAICall.isActive) {
-                        clearInterval(timerInt);
-                        return;
-                    }
-                    timerEl.innerText = activeAICall.getCallDuration();
-                }, 1000);
-            }
-        },
-        onTranscript: (role, text) => {
-            const msg = document.createElement('div');
-            msg.className = `aicall-msg ${role.toLowerCase()}`;
-            msg.innerText = text;
-            transcriptBox.appendChild(msg);
-            transcriptBox.scrollTop = transcriptBox.scrollHeight;
-        },
-        onEnd: () => {
-            statusEl.innerText = 'DISCONNECTED';
-            btn.classList.remove('active');
-            btnText.innerText = 'Start AI Call';
-            btnIcon.innerText = '📞';
-            card.classList.remove('active');
-        }
-    });
+  activeAICall = new window.ResQAICall({
+    lang: state.lang || 'en',
+    guestName: state.guestObj?.name || 'Guest',
+    incident: { type: type },
+    position: {
+      floor: state.guestObj?.floor || 1,
+      room: state.guestObj?.roomNumber || '101',
+      zone: state.guestObj?.zone || 'North'
+    },
+    onStatus: (status) => {
+      statusEl.innerText = status.toUpperCase();
+      if (status === 'connected') {
+        // Start timer updates
+        const timerInt = setInterval(() => {
+          if (!activeAICall || !activeAICall.isActive) {
+            clearInterval(timerInt);
+            return;
+          }
+          timerEl.innerText = activeAICall.getCallDuration();
+        }, 1000);
+      }
+    },
+    onTranscript: (role, text) => {
+      const msg = document.createElement('div');
+      msg.className = `aicall-msg ${role.toLowerCase()}`;
+      msg.innerText = text;
+      transcriptBox.appendChild(msg);
+      transcriptBox.scrollTop = transcriptBox.scrollHeight;
+    },
+    onEnd: () => {
+      statusEl.innerText = 'DISCONNECTED';
+      btn.classList.remove('active');
+      btnText.innerText = 'Start AI Call';
+      btnIcon.innerText = '📞';
+      card.classList.remove('active');
+    }
+  });
 
-    activeAICall.start();
+  activeAICall.start();
 }
 
 // Auto-trigger for fire
 const originalGuestTriggerEmergency = guestTriggerEmergency;
-guestTriggerEmergency = function(type) {
-    originalGuestTriggerEmergency(type);
-    if (type === 'fire') {
-        setTimeout(() => {
-            showToast('fire', 'AI ASSISTANT', 'Initiating emergency AI guidance call...');
-            initiateAICall('fire');
-        }, 1500);
-    }
+guestTriggerEmergency = function (type) {
+  originalGuestTriggerEmergency(type);
+  if (type === 'fire') {
+    setTimeout(() => {
+      showToast('fire', 'AI ASSISTANT', 'Initiating emergency AI guidance call...');
+      initiateAICall('fire');
+    }, 1500);
+  }
 };
