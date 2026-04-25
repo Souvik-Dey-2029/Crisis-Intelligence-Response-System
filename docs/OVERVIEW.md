@@ -49,20 +49,23 @@
 
 ## 🎬 The 3 Core Modules
 
-### 1️⃣ **Rapid Crisis Protocol**
+### 1️⃣ **Rapid Crisis Protocol (Crisis Portal)**
+**Location**: `public/modules/crisis-portal/`  
+**Status**: ✅ Functional (UI complete, some features demo-mode)
+
 **Purpose**: General public emergency response system
 
 **User Flow**:
-1. User arrives at landing page
-2. Selects "Personal Rescue AI"
+1. User arrives at landing page → module selection
+2. Selects "Guest/Visitor Crisis Portal"
 3. Enters dashboard with:
    - Real-time incident map (5km radius)
    - SOS activation button
    - Chat-based AI guidance
-   - Voice command support
-   - Safety tips & statistics
+   - Safety status indicator
+   - Nearby crisis alerts
 4. In emergency:
-   - User describes situation or uses voice
+   - User triggers SOS or describes situation
    - AI classifies incident type
    - AI generates evacuation guidance
    - Shows nearby safe zones
@@ -71,31 +74,44 @@
 **Key Features**:
 - Multi-language support (English, Hindi, Bengali)
 - Voice activation (Web Speech API)
-- Live incident mapping
+- Live incident mapping (Leaflet.js)
 - AI chatbot for guidance
-- Helpline integration
+- Real-time statistics dashboard
+- Auto-refresh every 60 seconds
+
+**Data**: Mock data used in demo mode (marked with ⚠️ [DEMO])
 
 **Technology**:
 - Frontend: HTML5, CSS3, Vanilla JS
 - Maps: Leaflet.js
 - Voice: Web Speech API
-- AI: Gemini 2.5 Flash
+- AI: Multi-provider routing (Gemini → OpenRouter → Groq)
 
 ---
 
 ### 2️⃣ **EcoPlus Module** (Hotel/Resort)
+**Location**: `public/modules/echo-plus/`  
+**Status**: ⚠️ Partially Functional (UI complete, admin auth and CCTV processing stubbed)
+
 **Purpose**: Specialized emergency response for hospitality properties
+
+**Key Note**: Admin password currently hardcoded as `echo2024` (security fix needed)
 
 **User Flows**:
 
 **Guest Flow**:
-1. Guest checks in via app
-2. Selects room/floor location
-3. In emergency:
-   - Selects emergency type (Fire, Medical, etc.)
+1. Guest selects hotel from list
+2. Provides guest credentials
+3. Enters guest dashboard showing:
+   - Current location (room/floor)
+   - Emergency status
+   - Floor map with exits
+   - AI guidance panel
+4. In emergency:
+   - Guest triggers emergency type (Fire, Medical, etc.)
    - AI gives hotel-specific guidance
-   - Staff notified instantly
-   - Guest tracked in real-time
+   - Staff notified via admin panel
+   - Guest receives voice-guided instructions
 
 **Staff/Admin Flow**:
 1. Admin logs into command center
