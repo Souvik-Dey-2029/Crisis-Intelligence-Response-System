@@ -250,17 +250,38 @@ router.get('/:systemID/events', optionalAuth, async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// SQL: EXECUTE QUERY
+// SQL: EXECUTE QUERY (with system-scoped access control)
 router.post('/sql/execute', optionalAuth, async (req, res) => {
     try {
-        const { query: sqlQuery } = req.body;
+        const { query: sqlQuery, systemID } = req.body;
         if (!sqlQuery) return res.status(400).json({ error: 'Missing SQL query' });
+
+        // SECURITY: Verify system access before allowing query execution
+        if (systemID) {
+            const system = await (isMySQLAvailable()
+                ? query('SELECT id, user_id FROM systems WHERE id = ?', [systemID])
+                : new Promise((resolve) => {
+                    getDatabase().then(db => {
+                        db.get('SELECT id, admin_id FROM custom_rescue_systems WHERE id = ?', [systemID], (err, row) => {
+                            resolve(err ? null : row);
+                        });
+                    });
+                }));
+
+            if (!system) return res.status(404).json({ error: 'System not found' });
+
+            // Check if user has access to this system
+            if (req.user && system.user_id !== req.user.userID && system.admin_id !== req.user.userID) {
+                return res.status(403).json({ error: 'Access denied: You do not have permission to query this system' });
+            }
+        }
+
         const upper = sqlQuery.trim().toUpperCase();
         if (!upper.startsWith('SELECT') && !upper.startsWith('WITH') && !upper.startsWith('PRAGMA')) {
             return res.status(403).json({ error: 'Only SELECT and PRAGMA queries are permitted.' });
         }
         const results = await executeQuery(sqlQuery.trim());
-        await logActivity(null, 'SQL_QUERY', sqlQuery.substring(0, 200));
+        await logActivity(systemID || null, 'SQL_QUERY', sqlQuery.substring(0, 200));
         res.json({ success: true, results, rowCount: results.length, query: sqlQuery.trim() });
     } catch (error) { res.status(400).json({ success: false, error: error.message }); }
 });
@@ -496,7 +517,7 @@ router.delete('/:systemID', optionalAuth, async (req, res) => {
 
         // Delete the system itself
         const result = await new Promise((resolve, reject) => {
-            db.run(`DELETE FROM custom_rescue_systems WHERE id = ?`, [systemID], function(err) {
+            db.run(`DELETE FROM custom_rescue_systems WHERE id = ?`, [systemID], function (err) {
                 if (err) return reject(err);
                 resolve(this.changes);
             });
@@ -627,6 +648,35 @@ router.get('/incidents/:systemID', async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+// STATS: OVERVIEW — for SQL Module dashboard
+router.get('/stats/overview', optionalAuth, async (req, res) => {
+    try {
+        if (isMySQLAvailable()) {
+            const systems = await query('SELECT COUNT(*) as total FROM systems');
+            const active = await query('SELECT COUNT(*) as count FROM systems WHERE status = "active"');
+            const emergencies = await query('SELECT COUNT(*) as count FROM emergencies WHERE created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)');
+            return res.json({
+                stats: {
+                    total_systems: systems[0]?.total || 0,
+                    active_systems: active[0]?.count || 0,
+                    emergencies_this_month: emergencies[0]?.count || 0
+                }
+            });
+        }
 
+        const db = await getDatabase();
+        const stats = await new Promise((resolve) => {
+            db.get(`SELECT
+                (SELECT COUNT(*) FROM custom_rescue_systems) as total_systems,
+                (SELECT COUNT(*) FROM custom_rescue_systems WHERE status='active') as active_systems,
+                (SELECT COUNT(*) FROM emergencies WHERE created_at > datetime('now', '-30 days')) as emergencies_this_month`,
+                (err, row) => {
+                    if (err) resolve({ total_systems: 0, active_systems: 0, emergencies_this_month: 0 });
+                    else resolve(row || {});
+                });
+        });
+        res.json({ stats });
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
 
 export default router;
