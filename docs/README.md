@@ -1,9 +1,14 @@
 # ResQAI - Emergency Intelligence & Response System
 
 ## 📋 Quick Links
-- **Features**: See [FEATURES.md](./FEATURES.md)
-- **Project Structure**: See [STRUCTURE.md](./STRUCTURE.md)
+- **Current Status**: See [CURRENT_STATUS.md](./CURRENT_STATUS.md) ⭐ **START HERE**
 - **Setup Guide**: See [SETUP.md](./SETUP.md)
+- **API Reference**: See [API.md](./API.md)
+- **System Architecture**: See [ARCHITECTURE.md](./ARCHITECTURE.md)
+- **Module Documentation**: See [MODULES.md](./MODULES.md)
+- **Data Flow**: See [DATA_FLOW.md](./DATA_FLOW.md)
+- **AI System**: See [AI_SYSTEM.md](./AI_SYSTEM.md)
+- **Production Deployment**: See [PRODUCTION_DEPLOYMENT.md](./PRODUCTION_DEPLOYMENT.md)
 
 ---
 
