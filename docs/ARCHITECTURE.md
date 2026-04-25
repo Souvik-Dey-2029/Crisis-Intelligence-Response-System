@@ -91,13 +91,15 @@ CORE -->|Read/Write| DATA
 | `portal.js` | GET /safety-tip, POST /sos-log, POST /ai-guide, GET /safe-zones | Crisis response coordination |
 | `custom-system.js` | POST /create, GET /:systemID, PATCH /:systemID, DELETE /:systemID | Custom system management |
 | `aicall.js` | Voice call orchestration | AI-powered voice interactions |
+| `custom-system.js` | `/create`, `/:id`, `/sql/*` routes | Custom system CRUD, SQL query execution, AI query assistance |
 
 **Server Bootstrap**: `src/server.js`
 - Express initialization
 - Middleware registration
-- Static file serving
-- Route mounting
-- Error handling
+- Static file serving from `public/`
+- Route mounting at `/api`
+- Error handling with fallbacks
+- Socket.IO ready (configured but not actively used yet)
 
 ---
 
