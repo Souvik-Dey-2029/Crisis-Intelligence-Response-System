@@ -69,12 +69,12 @@ function getMockAlerts() {
     return [
         {
             severity: 'critical',
-            message: 'Fire Alert',
+            message: '⚠️ [DEMO] Fire Alert',
             created_at: new Date().toISOString()
         },
         {
             severity: 'warning',
-            message: 'Medical Emergency',
+            message: '⚠️ [DEMO] Medical Emergency',
             created_at: new Date(Date.now() - 300000).toISOString()
         }
     ];
@@ -83,13 +83,13 @@ function getMockAlerts() {
 function getMockActivity() {
     return [
         {
-            action: 'SOS Triggered',
-            details: 'Emergency signal received',
+            action: '⚠️ [DEMO] SOS Triggered',
+            details: 'This is demonstration data - Emergency signal received',
             created_at: new Date().toISOString()
         },
         {
-            action: 'Alert Broadcast',
-            details: 'Staff notification sent',
+            action: '⚠️ [DEMO] Alert Broadcast',
+            details: 'This is demonstration data - Staff notification sent',
             created_at: new Date(Date.now() - 300000).toISOString()
         }
     ];
