@@ -18,27 +18,53 @@
 
 ## Current Production Entry Flow
 
-### Public Pages
-- `public/pages/landing.html`
-- `public/pages/module-selection.html`
-- `public/pages/guest-crisis-portal.html`
-- `public/modules/rescue-builder/pages/custom-builder-dashboard.html`
-- `public/modules/rescue-builder/pages/custom-builder-org-select.html`
+### Public Pages (Entry Points)
+- **Landing**: `public/pages/landing.html` (marketing page)
+- **Module Selection**: `public/pages/module-selection.html` (choose Crisis Portal / EcoPlus / Custom Builder)
+- **Crisis Portal**: `public/modules/crisis-portal/pages/guest-crisis-portal.html` (emergency response)
+- **EcoPlus Guest**: `public/modules/echo-plus/index.html` (hotel emergency system)
+- **Custom Builder**: `public/modules/rescue-builder/index.html` (system creation)
+- **Additional Pages**: `public/pages/faq.html`, `public/pages/privacy-policy.html`, `public/pages/module-guidance.html`
 
 ### Custom Builder Runtime
-- `public/modules/rescue-builder/index.html`
-- `public/modules/rescue-builder/js/builder.js`
+- Dashboard: `public/modules/rescue-builder/pages/custom-builder-dashboard.html`
+- Organization Select: `public/modules/rescue-builder/pages/custom-builder-org-select.html`
+- Builder Logic: `public/modules/rescue-builder/js/builder.js`
+- Template System: `public/modules/rescue-builder/js/templates.js`
 
 ## Backend Checks
 
-### Server
+### Server Configuration
 - `src/server.js` serves static assets from `public/`
-- `/dashboard` now points to `public/modules/rescue-builder/pages/custom-builder-dashboard.html`
-- non-API routes fall back to `public/pages/landing.html`
+- All routes prefixed with `/api/` go to Express handlers
+- Non-API routes fall back to `public/pages/landing.html`
+- CORS configured for `localhost:3000` and Render deployment
 
-### Health Check
+### Health Checks
 ```bash
+# API Health
 curl https://your-app.onrender.com/api/health
+
+# Response should be:
+{"status":"ok","timestamp":"2026-04-26T...","providers":{"gemini":"✓","openrouter":"?","groq":"?","free":"✓"}}
+```
+
+### Critical Endpoints to Test
+```bash
+# Chat API
+curl -X POST https://your-app.onrender.com/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Fire emergency","language":"en"}'
+
+# Emergency creation
+curl -X POST https://your-app.onrender.com/api/emergencies \
+  -H "Content-Type: application/json" \
+  -d '{"type":"fire","location":"test","status":"active"}'
+
+# Custom system creation
+curl -X POST https://your-app.onrender.com/api/custom-system/create \
+  -H "Content-Type: application/json" \
+  -d '{"org_type":"school","name":"Test School"}'
 ```
 
 ## Frontend Checks
