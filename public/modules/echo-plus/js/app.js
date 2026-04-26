@@ -148,10 +148,30 @@ window.goGuest = goGuest;
 
 function goAdmin() {
   console.log('🖥️ [EcoPlus] Going to admin mode');
+  state.role = 'admin';
   initAllGuestPositions(); // Start tracking all guests
   show('screen-admin-login');
 }
 window.goAdmin = goAdmin;
+
+function goBackToResQAI(event) {
+  if (event && typeof event.preventDefault === 'function') {
+    event.preventDefault();
+  }
+
+  try {
+    // If loaded inside the wrapper iframe, prefer parent navigation callback.
+    if (window.parent && window.parent !== window && typeof window.parent.goBackFromEcoPlus === 'function') {
+      window.parent.goBackFromEcoPlus();
+      return;
+    }
+  } catch (error) {
+    console.warn('[EcoPlus] Parent navigation bridge unavailable:', error.message);
+  }
+
+  window.location.href = '../../pages/module-selection.html';
+}
+window.goBackToResQAI = goBackToResQAI;
 
 
 // ============================================================
@@ -215,9 +235,18 @@ function simulateGuestMovement() {
 function goLanding() {
   state.role = null; state.selectedHotel = null; state.currentEmergency = null;
   state.guestObj = null; state.notifications = [];
+  currentStaff = null;
+  staffDutyStart = null;
+  if (staffDutyTimer) {
+    clearInterval(staffDutyTimer);
+    staffDutyTimer = null;
+  }
+  const staffAlertBanner = $('staff-alert-banner');
+  if (staffAlertBanner) staffAlertBanner.style.display = 'none';
   show('screen-landing');
   clearEmergencyVisuals();
 }
+window.goLanding = goLanding;
 function goGuestLogin() {
   if (!state.selectedHotel) {
     console.warn('No hotel selected');
@@ -233,7 +262,9 @@ function goGuestLogin() {
 
   show('screen-guest-login');
 }
+window.goGuestLogin = goGuestLogin;
 function goGuestSelectFromLogin() { show('screen-guest-select'); }
+window.goGuestSelectFromLogin = goGuestSelectFromLogin;
 
 // ============================================================
 // NEARBY STAFF (GUEST DASHBOARD)
@@ -1917,6 +1948,7 @@ let staffDutyStart = null;
 let staffDutyTimer = null;
 
 function goStaff() {
+  state.role = 'staff';
   show('screen-staff-login');
   const input = document.getElementById('staff-pass-input');
   if (input) { input.value = ''; input.focus(); }
