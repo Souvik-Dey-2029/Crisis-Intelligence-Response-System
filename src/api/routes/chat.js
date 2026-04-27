@@ -13,7 +13,7 @@ const router = express.Router();
 // ==================== GET AI RESPONSE - MULTI-PROVIDER ====================
 
 async function getAIResponse(message, language = 'en') {
-    console.log('\n📨 [CHAT] Message received:', message.substring(0, 100));
+    // Message received - processing
 
     // Validate language
     if (!isValidLanguage(language)) {
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
         const { message, language = 'en' } = req.body;
 
         if (!message || !message.trim()) {
-            console.warn('❌ Empty message received');
+            // Empty message validation failed
             return res.status(400).json({
                 success: false,
                 error: 'AI service unavailable',
@@ -55,7 +55,7 @@ router.post('/', async (req, res) => {
             });
         }
 
-        console.log('\n📨 [ROUTE] Chat request received');
+        // Chat request received and processed
         const id = uuidv4();
 
         // Get AI response from multi-provider router (always returns a response)
@@ -64,13 +64,15 @@ router.post('/', async (req, res) => {
         // Store in database (optional)
         try {
             await addChatMessage(id, message, response);
-            console.log('💾 Saved to database');
+            // Database save skipped or completed
+
         } catch (error) {
             console.warn('⚠️  Could not save chat history:', error.message);
             // Don't fail the response if chat history fails
         }
 
-        console.log('✅ [ROUTE] Sending response to client');
+        // Response prepared and sending to client
+
         res.json({
             success: true,
             message: message,

@@ -60,12 +60,7 @@ router.post('/emergency-guidance', async (req, res) => {
             });
         }
 
-        console.log(`🏨 [EcoPlus] Emergency Guidance Request:`, {
-            type: emergencyType,
-            floor,
-            severity,
-            language
-        });
+        // Verbose logging disabled for production
 
         // Build comprehensive prompt for emergency guidance
         const prompt = buildEmergencyGuidancePrompt(
@@ -86,7 +81,7 @@ router.post('/emergency-guidance', async (req, res) => {
             ? guidance.substring(0, 497) + '...'
             : guidance;
 
-        console.log('✅ Emergency guidance generated successfully');
+        // Guidance generated successfully
 
         res.json({
             guidance: limitedGuidance,
@@ -291,8 +286,7 @@ router.post('/test-groq', async (req, res) => {
 
         const responseTime = Date.now() - startTime;
 
-        console.log('✅ [TEST-GROQ] GROQ PROVIDER SUCCESS');
-        console.log('🧪 Groq test completed - Provider confirmed working\n');
+        // Groq test completed successfully
 
         res.json({
             success: true,
@@ -345,15 +339,12 @@ router.post('/analyze-layout', async (req, res) => {
             });
         }
 
-        console.log('🖼️ [LAYOUT] Analyzing building layout image...');
-        console.log(`   MimeType: ${mimeType}`);
-        console.log(`   Description: ${description || 'None'}`);
-        console.log(`   Image size: ${Math.round(imageBase64.length / 1024)}KB`);
+        // Layout analysis started
 
         const prompt = buildLayoutAnalysisPrompt(description);
 
         const rawResponse = await generateImageAnalysis(imageBase64, mimeType, prompt);
-        console.log('✅ [LAYOUT] Raw AI response received');
+        // AI response received
 
         // Parse JSON from response
         let analysis;
@@ -388,10 +379,7 @@ router.post('/analyze-layout', async (req, res) => {
             });
         }
 
-        console.log('✅ [LAYOUT] Analysis parsed successfully');
-        console.log(`   Safety Score: ${analysis.overallSafetyScore}/10`);
-        console.log(`   Exits found: ${analysis.exits?.length || 0}`);
-        console.log(`   Risk zones: ${analysis.highRiskZones?.length || 0}`);
+        // Layout analysis parsed successfully
 
         res.json({
             success: true,
