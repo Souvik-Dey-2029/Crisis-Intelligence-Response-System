@@ -393,10 +393,10 @@ function guestLogin() {
     return;
   }
 
-  // Find room and validate code (Allow 'guest' or 'echo2024' as universal demo codes)
+  // Find room and validate code (Allow only 'guest' as a universal demo code)
   const found = state.selectedHotel.rooms.find(r =>
     r.roomNumber === room &&
-    (r.secretCode.toLowerCase() === code.toLowerCase() || code.toLowerCase() === 'guest' || code.toLowerCase() === 'echo2024') &&
+    (r.secretCode.toLowerCase() === code.toLowerCase() || code.toLowerCase() === 'guest') &&
     r.status === 'occupied'
   );
 
