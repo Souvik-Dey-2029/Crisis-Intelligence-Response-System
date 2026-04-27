@@ -84,8 +84,8 @@
   <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- SIDE NAV BAR -->
-  <aside
-    class="fixed left-0 top-0 h-screen flex flex-col z-40 bg-[#0a0e14]/60 backdrop-blur-2xl border-r border-white/5 w-72 shadow-[20px_0_60px_rgba(0,0,0,0.5)]">
+  <aside id="sidebar"
+    class="fixed left-0 top-0 h-screen flex flex-col z-40 bg-[#0a0e14]/95 backdrop-blur-2xl border-r border-white/5 w-72 shadow-[20px_0_60px_rgba(0,0,0,0.5)] transform -translate-x-full transition-transform duration-300 md:translate-x-0">
     <div class="px-8 py-10">
       <a href="/pages/module-selection.html">
         <h1 class="text-xl font-black text-rose-500 font-headline uppercase tracking-widest">ResQAI</h1>
@@ -138,11 +138,14 @@
     </div>
   </aside>
 
-  <main class="ml-72 min-h-screen flex flex-col">
+  <main class="md:ml-72 min-h-screen flex flex-col transition-all duration-300">
     <!-- TOP APP BAR -->
     <header
-      class="sticky top-0 z-30 flex justify-between items-center w-full px-8 py-4 h-20 bg-slate-950/40 backdrop-blur-xl border-b border-white/10 shadow-[0_0_40px_rgba(255,83,82,0.1)]">
-      <div class="flex items-center gap-6">
+      class="sticky top-0 z-30 flex justify-between items-center w-full px-4 md:px-8 py-4 h-20 bg-slate-950/80 backdrop-blur-xl border-b border-white/10 shadow-[0_0_40px_rgba(255,83,82,0.1)]">
+      <div class="flex items-center gap-2 md:gap-6">
+        <button id="mobile-menu-btn" class="md:hidden p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
         <a href="/pages/module-selection.html"
           class="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-slate-300 hover:text-on-surface hover:bg-white/10 transition-all">
           <span class="material-symbols-outlined text-base">arrow_back</span>
@@ -154,13 +157,13 @@
             7G</span>
         </div>
         <div id="status-indicator"
-          class="flex items-center gap-2 px-4 py-2 bg-green-500/10 rounded-full border border-green-500/20">
+          class="hidden md:flex items-center gap-2 px-4 py-2 bg-green-500/10 rounded-full border border-green-500/20">
           <div class="status-dot w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           <span class="status-text text-xs font-headline uppercase tracking-widest text-green-500">STATUS: SECURE</span>
         </div>
       </div>
-      <div class="flex items-center gap-6">
-        <p id="live-clock" class="font-headline text-on-surface font-bold text-lg tracking-tight">00:00:00 UTC</p>
+      <div class="flex items-center gap-3 md:gap-6">
+        <p id="live-clock" class="hidden md:block font-headline text-on-surface font-bold text-lg tracking-tight">00:00:00 UTC</p>
         <div class="flex items-center gap-2">
           <button class="p-2 text-slate-400 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-all"
             title="Security Protocol">
@@ -182,10 +185,10 @@
 
     <!-- ===== COMMAND CENTER ===== -->
     <div data-section="command-center" class="hidden flex-1 flex flex-col">
-      <div class="p-8 grid grid-cols-12 gap-8 flex-1">
+      <div class="p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
 
         <!-- LEFT: NEARBY ALERTS -->
-        <section class="col-span-3 flex flex-col gap-6">
+        <section class="col-span-1 lg:col-span-3 flex flex-col gap-6">
           <div class="flex items-center justify-between">
             <h2 class="font-headline text-sm font-black uppercase tracking-widest text-slate-400">Nearby Crisis Alerts
             </h2>
@@ -195,13 +198,13 @@
         </section>
 
         <!-- CENTER: SMART SOS HUB -->
-        <section class="col-span-5 flex flex-col gap-6">
+        <section class="col-span-1 lg:col-span-5 flex flex-col gap-6">
           <div class="flex items-center gap-3">
             <span class="material-symbols-outlined text-rose-500">bolt</span>
             <h2 class="font-headline text-lg font-black uppercase tracking-tighter text-on-background">Smart SOS Hub
             </h2>
           </div>
-          <div class="grid grid-cols-4 gap-4">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <button data-sos-type="fire"
               class="aspect-square flex flex-col items-center justify-center gap-3 bg-surface-container-low border border-white/5 rounded-2xl hover:border-primary-container transition-all group">
               <div
@@ -294,7 +297,7 @@
         </section>
 
         <!-- RIGHT: MAP -->
-        <section class="col-span-4 flex flex-col gap-6">
+        <section class="col-span-1 lg:col-span-4 flex flex-col gap-6">
           <div class="flex items-center justify-between">
             <h2 class="font-headline text-sm font-black uppercase tracking-widest text-slate-400">Live Safety Map</h2>
             <div class="flex gap-2">
@@ -376,12 +379,12 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-12 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <!-- QUICK DIAL -->
-          <div class="col-span-8">
+          <div class="col-span-1 lg:col-span-8">
             <h2 class="text-[10px] font-headline font-black uppercase tracking-widest text-slate-500 mb-3 px-1">
               Quick-Dial Protocols</h2>
-            <div class="flex gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <button data-dial="112"
                 class="flex-1 bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center justify-between hover:bg-white/10 transition-all">
                 <span class="font-headline font-black text-xl text-on-background">112</span>
@@ -405,7 +408,7 @@
             </div>
           </div>
           <!-- SAFETY TIPS -->
-          <div class="col-span-4">
+          <div class="col-span-1 lg:col-span-4">
             <h2 class="text-[10px] font-headline font-black uppercase tracking-widest text-slate-500 mb-3 px-1">Active
               Safety Protocol</h2>
             <div class="bg-surface-container-high border border-white/10 p-5 rounded-2xl relative overflow-hidden">
@@ -436,7 +439,7 @@
           </p>
         </div>
       </div>
-      <div class="grid grid-cols-3 gap-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
         <div class="bg-surface-container-low border border-white/5 rounded-2xl p-6">
           <div class="flex justify-between items-start mb-4"><span
               class="text-[10px] font-headline text-slate-500 uppercase">Active Incidents</span><span
@@ -496,7 +499,7 @@
           <p class="text-xs text-slate-500 font-headline">Track and coordinate emergency response units</p>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="space-y-4">
           <h2 class="font-headline text-sm font-black uppercase tracking-widest text-slate-400">Active Units</h2>
           <div id="deployment-units" class="space-y-3"></div>
@@ -535,7 +538,7 @@
           <p class="text-xs text-slate-500 font-headline">Communications, broadcasts, and incoming signals</p>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-surface-container-low border border-white/5 rounded-2xl p-6">
           <h2 class="font-headline text-sm font-black uppercase tracking-widest text-slate-400 mb-4">Broadcast Message
           </h2>
@@ -1157,8 +1160,25 @@
       });
     }
 
+    // ===== MOBILE MENU =====
+    function initMobileMenu() {
+      const btn = document.getElementById('mobile-menu-btn');
+      const sidebar = document.getElementById('sidebar');
+      if (btn && sidebar) {
+        btn.addEventListener('click', () => {
+          sidebar.classList.toggle('-translate-x-full');
+        });
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.addEventListener('click', () => {
+            if (window.innerWidth < 768) sidebar.classList.add('-translate-x-full');
+          });
+        });
+      }
+    }
+
     // ===== BOOT =====
     document.addEventListener('DOMContentLoaded', () => {
+      initMobileMenu();
       startClock();
       initNav();
       renderAlerts();
