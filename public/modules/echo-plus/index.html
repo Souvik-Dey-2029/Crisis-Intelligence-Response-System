@@ -2309,14 +2309,18 @@
 
       // ── Runtime state ───────────────────────────────────────────
       let tmModel = null;
+      let cocoModel = null;            // COCO-SSD for knife bounding-box detection
       let modelReady = false;
       let modelLoading = false;
       let sirenActive = false;
       let sirenCtx = null;
       let cameras = [];
       let incidents = [];
-      let stats = { fire: 0, smoke: 0, total: 0 };
+      let stats = { fire: 0, smoke: 0, weapon: 0, total: 0 };
       let camCounter = 0;
+      const KNIFE_CLASSES = ['knife', 'scissors'];   // COCO classes treated as weapons
+      const KNIFE_CONF_THRESH = 0.52;                // minimum confidence to flag
+      const KNIFE_DEBOUNCE_MS = 12000;               // cooldown between knife alerts per cam
 
       // ── AI status pill ───────────────────────────────────────────
       function setAIPill(state) {
@@ -2353,6 +2357,13 @@
           const warmupCanvas = document.createElement('canvas');
           warmupCanvas.width = warmupCanvas.height = INPUT_SIZE;
           await tmModel.predict(warmupCanvas);
+          // ── Load COCO-SSD for knife bounding-box detection ──────────────────
+          await injectScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+          cocoModel = await cocoSsd.load({ base: 'mobilenet_v2' });
+          const cocoWarm = document.createElement('canvas');
+          cocoWarm.width = cocoWarm.height = 224;
+          await cocoModel.detect(cocoWarm);
+          console.log('[CCTV] ✅ COCO-SSD knife model ready');
           modelReady = true;
           modelLoading = false;
           setAIPill('ready');
@@ -2378,6 +2389,7 @@
             id: 'cctvcam-' + Date.now(),
             name: 'Camera ' + camCounter,
             stream,
+            lastKnifeAlert: 0,
             videoEl: null,
             loopActive: false,
             frameCount: 0,                    // warmup counter
@@ -2410,12 +2422,14 @@
           '</div>' +
           '<div class="cctv-feed">' +
           '<video id="cctv-video-' + cam.id + '" autoplay muted playsinline></video>' +
+          '<canvas id="cctv-knife-canvas-' + cam.id + '" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:4;"></canvas>' +
           '<div class="cctv-overlay" id="cctv-ov-' + cam.id + '">' +
           '<div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>' +
           '<span>Waiting for AI…</span>' +
           '</div>' +
           '<div class="cctv-scan-line"></div>' +
           '<div class="cctv-fps-badge" id="cctv-fps-' + cam.id + '">AI: -- FPS</div>' +
+          '<div id="cctv-knife-badge-' + cam.id + '" style="display:none;position:absolute;bottom:28px;left:6px;z-index:10;background:#7f1d1d;border:1.5px solid #ef4444;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:800;color:#fca5a5;letter-spacing:0.5px;animation:cctvFlash .5s infinite alternate;">🔪 KNIFE</div>' +
           '</div>' +
           '<div class="cctv-bar-wrap">' +
           '<div class="cctv-bar-lbls">' +
@@ -2429,6 +2443,13 @@
           '<div style="display:flex;justify-content:space-between;font-size:9px;color:#4b5563;margin-top:3px;">' +
           '<span>EMA smooth:</span>' +
           '<span id="cctv-ema-' + cam.id + '" style="color:#6b7280;">—</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.15);border-radius:6px;padding:4px 8px;">' +
+          '<span style="font-size:10px;color:#9ca3af;">🔪 Knife</span>' +
+          '<span id="cctv-knife-pct-' + cam.id + '" style="font-size:11px;font-weight:700;color:#6b7280;">—</span>' +
+          '<div style="width:60px;height:5px;background:#1f2937;border-radius:3px;overflow:hidden;">' +
+          '<div id="cctv-knife-bar-' + cam.id + '" style="height:100%;width:0%;background:#ef4444;border-radius:3px;transition:width 0.3s;"></div>' +
+          '</div>' +
           '</div>' +
           '</div>';
         grid.insertBefore(tile, addBtn);
@@ -2548,6 +2569,148 @@
         }
 
         setNormal(cam);
+
+        // ── Knife detection (COCO-SSD bounding box) ──────────────────
+        if (cocoModel) runKnifeDetection(cam, v);
+      }
+
+      // ── Knife detection with COCO-SSD ─────────────────────────────
+      async function runKnifeDetection(cam, videoEl) {
+        if (!cocoModel || !videoEl || videoEl.readyState < 2) return;
+        try {
+          const preds = await cocoModel.detect(videoEl);
+          const knives = preds.filter(p =>
+            KNIFE_CLASSES.includes(p.class) && p.score >= KNIFE_CONF_THRESH
+          );
+          drawKnifeBBoxes(cam, videoEl, preds, knives);
+          updateKnifeBar(cam, knives);
+          if (knives.length > 0) {
+            const now = Date.now();
+            if (!cam.lastKnifeAlert || now - cam.lastKnifeAlert > KNIFE_DEBOUNCE_MS) {
+              cam.lastKnifeAlert = now;
+              triggerKnifeIncident(cam, knives[0]);
+            }
+          }
+        } catch(e) { /* silent fail */ }
+      }
+
+      // ── Draw bounding boxes on knife canvas ────────────────────────
+      function drawKnifeBBoxes(cam, videoEl, allPreds, knives) {
+        const canvas = document.getElementById('cctv-knife-canvas-' + cam.id);
+        if (!canvas) return;
+        const vw = videoEl.videoWidth || 640;
+        const vh = videoEl.videoHeight || 480;
+        canvas.width  = vw;
+        canvas.height = vh;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, vw, vh);
+        allPreds.forEach(p => {
+          const isWeapon = KNIFE_CLASSES.includes(p.class) && p.score >= KNIFE_CONF_THRESH;
+          const [x, y, w, h] = p.bbox;
+          if (isWeapon) {
+            // Red glowing box
+            ctx.save();
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth   = 3;
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur  = 12;
+            ctx.strokeRect(x, y, w, h);
+            ctx.restore();
+            // Corner tracker marks
+            const tick = Math.min(w, h) * 0.18;
+            ctx.strokeStyle = '#fca5a5'; ctx.lineWidth = 3;
+            [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(([cx,cy,dx,dy]) => {
+              ctx.beginPath(); ctx.moveTo(cx+dx*tick,cy); ctx.lineTo(cx,cy); ctx.lineTo(cx,cy+dy*tick); ctx.stroke();
+            });
+            // Label pill
+            const label = p.class.toUpperCase() + ' ' + (p.score*100).toFixed(0) + '%';
+            ctx.font = 'bold 13px Inter, sans-serif';
+            const tw = ctx.measureText(label).width;
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(x, y > 22 ? y-22 : y+h, tw+10, 20);
+            ctx.fillStyle = '#fff';
+            ctx.fillText(label, x+5, y > 22 ? y-7 : y+h+15);
+          } else {
+            ctx.strokeStyle = 'rgba(34,197,94,0.35)'; ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, w, h);
+            ctx.font = '10px Inter, sans-serif'; ctx.fillStyle = 'rgba(34,197,94,0.7)';
+            ctx.fillText(p.class + ' ' + (p.score*100).toFixed(0)+'%', x+3, y > 14 ? y-3 : y+12);
+          }
+        });
+      }
+
+      // ── Update knife confidence bar ────────────────────────────────
+      function updateKnifeBar(cam, knives) {
+        const bar   = document.getElementById('cctv-knife-bar-'   + cam.id);
+        const pct   = document.getElementById('cctv-knife-pct-'   + cam.id);
+        const badge = document.getElementById('cctv-knife-badge-' + cam.id);
+        if (!bar) return;
+        if (knives.length > 0) {
+          const best = Math.max(...knives.map(k => k.score));
+          const pctVal = (best * 100).toFixed(0);
+          bar.style.width = pctVal + '%';
+          bar.style.background = best > 0.75 ? '#dc2626' : '#f97316';
+          if (pct)   { pct.textContent = pctVal + '%'; pct.style.color = '#ef4444'; }
+          if (badge) badge.style.display = 'block';
+        } else {
+          bar.style.width = '0%';
+          if (pct)   { pct.textContent = '—'; pct.style.color = '#6b7280'; }
+          if (badge) badge.style.display = 'none';
+          const cv = document.getElementById('cctv-knife-canvas-' + cam.id);
+          if (cv) cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
+        }
+      }
+
+      // ── Knife incident trigger ─────────────────────────────────────
+      function triggerKnifeIncident(cam, detection) {
+        const conf   = detection.score;
+        const pctStr = (conf * 100).toFixed(1);
+        console.warn('[CCTV] 🔪 KNIFE DETECTED:', cam.name, pctStr + '%');
+        const tile  = document.getElementById('cctv-tile-'  + cam.id);
+        const badge = document.getElementById('cctv-badge-' + cam.id);
+        if (tile)  tile.className = 'cctv-tile weapon-alert';
+        if (badge) { badge.className='cctv-badge'; badge.style.background='#ef4444'; badge.style.color='#fff'; badge.textContent='🔪 KNIFE'; }
+        if (!sirenActive) activateSiren();
+        stats.weapon = (stats.weapon || 0) + 1;
+        stats.total++;
+        const wStat = document.getElementById('cctvStatWeapon');
+        if (wStat) wStat.textContent = stats.weapon;
+        const tStat = document.getElementById('cctvStatTotal');
+        if (tStat) tStat.textContent = stats.total;
+        const inc = { id:'knife-'+Date.now(), cam:cam.name, type:'Weapon', subtype:detection.class, conf, time:new Date().toISOString() };
+        incidents.unshift(inc);
+        addKnifeToFeed(inc, pctStr);
+        const chip = document.getElementById('chipWeapon');
+        if (chip) chip.classList.add('active');
+        if (typeof triggerEmergency === 'function') {
+          triggerEmergency('suspicious', {
+            description: '🔪 ' + detection.class.toUpperCase() + ' detected by CCTV AI on ' + cam.name + '. Confidence: ' + pctStr + '%. Security respond immediately.',
+            floor: (window.state && window.state.currentFloor) || 1,
+            zone: cam.name, roomNumber: 'CCTV', severity: 'critical',
+            recommendedAction: 'Security to intercept. Do not approach alone. Alert police if needed.'
+          });
+        }
+        setTimeout(() => setNormal(cam), 10000);
+      }
+
+      // ── Knife incident feed entry ──────────────────────────────────
+      function addKnifeToFeed(inc, pctStr) {
+        const list  = document.getElementById('cctvIncidentList');
+        const empty = document.getElementById('cctvEmptyFeed');
+        if (empty) empty.remove();
+        const d = document.createElement('div');
+        d.className = 'cctv-inc-item weapon';
+        d.style.cssText = 'display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:rgba(127,29,29,0.3);border-left:3px solid #ef4444;border-bottom:1px solid rgba(255,255,255,0.05);';
+        d.innerHTML =
+          '<div style="font-size:1.2rem">🔪</div>' +
+          '<div style="flex:1">' +
+          '<div style="font-size:12px;font-weight:800;color:#fca5a5;">' + inc.subtype.toUpperCase() + ' DETECTED</div>' +
+          '<div style="font-size:10px;color:#9ca3af;margin-top:2px;">' + inc.cam + ' · ' + new Date(inc.time).toLocaleTimeString() + '</div>' +
+          '<div style="font-size:10px;color:#f87171;margin-top:2px;">🤖 COCO-SSD · Confidence: ' + pctStr + '% · Siren triggered</div>' +
+          '</div>';
+        list.prepend(d);
+        const badge = document.getElementById('cctvIncBadge');
+        if (badge) { badge.style.display=''; badge.textContent=incidents.length; }
       }
 
       // ── Confidence bar (raw bar + EMA readout) ────────────────────
