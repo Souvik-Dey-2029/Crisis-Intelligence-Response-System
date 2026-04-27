@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -166,7 +167,7 @@ app.get('/s/:code', (req, res) => {
 // Serve the cinematic landing page as the default entry point
 app.get('/pages/:page', (req, res) => {
     const pagePath = path.join(__dirname, '../public/pages', req.params.page);
-    if (require('fs').existsSync(pagePath)) res.sendFile(pagePath);
+    if (fs.existsSync(pagePath)) res.sendFile(pagePath);
     else res.sendFile(path.join(__dirname, '../public/pages/landing.html'));
 });
 
