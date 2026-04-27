@@ -1,106 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>ResQAI - Privacy Policy</title>
-    <meta name="theme-color" content="#050505">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles/landing.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <style>
-        body {
-            background-color: #050505;
-            color: rgba(255, 255, 255, 0.9);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
         }
-        .page-header {
-            padding: 80px 5% 40px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            background: linear-gradient(to bottom, rgba(220, 38, 38, 0.05), transparent);
-        }
-        .page-title {
-            font-size: 32px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: #fff;
-        }
-        .page-subtitle {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.5);
-        }
-        .content-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 60px 5%;
-            flex-grow: 1;
-            width: 100%;
-        }
-        .content-block {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 32px;
-            margin-bottom: 32px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .content-block:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(220, 38, 38, 0.05);
-            border-color: rgba(220, 38, 38, 0.2);
-        }
-        .content-text {
-            font-size: 15px;
-            line-height: 1.8;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 24px;
-        }
-        .content-text:last-child {
-            margin-bottom: 0;
-        }
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: rgba(255, 255, 255, 0.5);
-            text-decoration: none;
-            font-size: 14px;
-            margin-bottom: 32px;
-            transition: color 0.3s ease;
-        }
-        .back-link:hover {
-            color: #fff;
-        }
+        body { background-color: #0a0e14; overflow-x: hidden; }
+        .glass-card { background: rgba(49, 53, 60, 0.4); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .hero-gradient { background: radial-gradient(circle at 50% 50%, rgba(255, 83, 82, 0.08) 0%, rgba(10, 14, 20, 0) 70%); }
+        .wireframe-bg { background-image: linear-gradient(rgba(171, 137, 134, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(171, 137, 134, 0.05) 1px, transparent 1px); background-size: 40px 40px; }
     </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface": "#dfe2eb", "outline-variant": "#5b403e", "primary-container": "#ff5352", "on-primary-container": "#5c0008",
+                        "secondary-container": "#14d1ff", "tertiary-container": "#b76dff", "primary": "#ffb3ae", "secondary": "#a6e6ff", "tertiary": "#ddb7ff", "on-surface-variant": "#e4beba", "surface-container-high": "#262a31"
+                    },
+                    fontFamily: { headline: ["Space Grotesk"], body: ["Inter"], label: ["Space Grotesk"] }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-
-    <header class="page-header">
-        <div style="max-width: 800px; margin: 0 auto;">
-            <a href="/" class="back-link">← Back to Home</a>
-            <h1 class="page-title">Privacy Policy</h1>
-            <div class="page-subtitle">Effective Date: 2026</div>
-        </div>
-    </header>
-
-    <main class="content-container">
-        <div class="content-block">
-            <div class="content-text">
-                <strong>We value user safety and data privacy.</strong> ResQAI collects only essential operational data such as location (for emergency routing), system interaction logs, and user-provided inputs during crisis situations.
+<body class="font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+    <nav class="fixed top-0 w-full z-50 rounded-b-[20px] bg-slate-900/40 backdrop-blur-xl shadow-[0_0_40px_rgba(255,77,77,0.1)]">
+        <div class="flex justify-between items-center max-w-7xl mx-auto px-8 py-4">
+            <div class="flex items-center gap-8">
+                <a href="/pages/module-selection.html" class="text-2xl font-black tracking-tighter text-red-500 font-['Space_Grotesk'] bg-gradient-to-r from-primary-container to-primary bg-clip-text text-transparent hover:opacity-80 transition-opacity">ResQAI</a>
             </div>
-            <div class="content-text">
-                No sensitive personal data is sold or shared with third parties. All AI responses are processed securely via backend APIs. Local fallback systems may temporarily store minimal data for system continuity.
-            </div>
-            <div class="content-text">
-                By using ResQAI, users consent to real-time processing of emergency-related inputs to ensure rapid response and safety guidance.
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    <span class="text-[10px] font-label uppercase tracking-widest text-on-surface-variant/80">System Active</span>
+                </div>
             </div>
         </div>
+    </nav>
+
+    <main class="relative pt-32 min-h-[90vh]">
+        <div class="fixed inset-0 wireframe-bg -z-10 opacity-30 pointer-events-none"></div>
+        <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full h-full hero-gradient -z-10 pointer-events-none"></div>
+
+        <section class="max-w-4xl mx-auto px-8 py-20 text-center">
+            <h1 class="text-4xl md:text-6xl font-headline font-bold tracking-tighter text-on-surface mb-8 leading-none">
+                Privacy <span class="bg-gradient-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent">Policy</span>
+            </h1>
+            <p class="max-w-2xl mx-auto text-lg text-on-surface-variant leading-relaxed mb-12 opacity-80">
+                At ResQAI, protecting user data during critical emergency situations is a core design principle. This policy outlines how we collect, process, store, and safeguard information while delivering real-time crisis intelligence.
+            </p>
+        </section>
+
+        <section class="max-w-4xl mx-auto px-8 pb-24">
+            <div class="glass-card p-10 rounded-lg border border-outline-variant/10 text-left space-y-6">
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-primary">1. Data Collection & Purpose</h3>
+                    <p class="text-on-surface-variant/80">
+                        ResQAI collects only the minimum data required to deliver life-saving assistance. This may include location data, system interaction logs, and emergency inputs provided by the user. The sole purpose of data collection is to enable rapid response guidance, incident detection, and situational awareness during crisis scenarios.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-secondary">2. Data Anonymization</h3>
+                    <p class="text-on-surface-variant/80">
+                        During SOS activation and AI-assisted emergency guidance, all processed data is anonymized wherever possible. Identifiable user attributes are either removed or abstracted to ensure privacy while maintaining operational efficiency. Our AI systems prioritize speed and accuracy over personal identification.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-tertiary">3. AI Processing & Third-Party Services</h3>
+                    <p class="text-on-surface-variant/80">
+                        ResQAI utilizes multiple AI providers including OpenRouter, Gemini, and Groq to ensure high availability and redundancy. Data sent to these services is strictly limited to contextual emergency inputs. No persistent personal identifiers are shared with external AI providers.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-primary">4. Local & Secure Storage</h3>
+                    <p class="text-on-surface-variant/80">
+                        System state, logs, and emergency-related data are stored securely using SQLite or MySQL depending on deployment scale. Data is isolated per organization (e.g., hotel, institution) ensuring strict tenant-level separation and preventing cross-access between systems.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-secondary">5. Incident Analytics & Usage</h3>
+                    <p class="text-on-surface-variant/80">
+                        Aggregated and anonymized data may be used for analytics, including response time optimization, incident pattern recognition, and system performance improvements. These insights are strictly used to enhance safety protocols and are accessible only to authorized personnel.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-tertiary">6. Access Control & Authorization</h3>
+                    <p class="text-on-surface-variant/80">
+                        Access to sensitive data and system dashboards is restricted through role-based permissions. Administrative actions such as system creation or analytics access require authenticated sessions, while emergency usage remains accessible without login to ensure zero friction during crises.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-primary">7. Data Retention Policy</h3>
+                    <p class="text-on-surface-variant/80">
+                        Emergency data is retained only for as long as necessary to support operational needs and improve system intelligence. Temporary logs may be automatically cleared or archived based on system configuration and organizational policies.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-secondary">8. Security Measures</h3>
+                    <p class="text-on-surface-variant/80">
+                        We implement industry-standard security practices including encrypted data transmission (HTTPS), secure API handling, and database isolation. Continuous monitoring and fallback systems ensure resilience even during partial infrastructure failures.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-tertiary">9. User Responsibility</h3>
+                    <p class="text-on-surface-variant/80">
+                        Users are responsible for providing accurate information during emergencies. Misuse of the system, including false alerts or unauthorized access attempts, may result in restricted access or administrative action by system operators.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-headline font-bold mb-4 text-primary">10. Policy Updates</h3>
+                    <p class="text-on-surface-variant/80">
+                        This privacy policy may be updated periodically to reflect improvements in system architecture, security practices, or compliance requirements. Continued use of ResQAI indicates acceptance of the latest version of this policy.
+                    </p>
+                </div>
+
+            </div>
+        </section>
     </main>
 
-    <!-- FOOTER INJECTED VIA SCRIPT LATER (but we can add it here too) -->
-    </body>
+    <footer class="w-full py-12 px-8 bg-[#0a0e14] border-t border-white/5">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 max-w-7xl mx-auto">
+            <div class="flex flex-col gap-2">
+                <span class="text-lg font-bold text-slate-100 font-headline tracking-tighter">RESQAI</span>
+                <p class="font-['Inter'] text-[10px] tracking-widest uppercase text-slate-500">© 2026 RESQAI. ALL RIGHTS RESERVED.</p>
+            </div>
+            <div class="flex gap-8">
+                <a class="font-['Inter'] text-xs tracking-widest uppercase text-slate-500 hover:text-purple-400 transition-colors" href="/pages/security-protocols.html">Security Protocols</a>
+                <a class="font-['Inter'] text-xs tracking-widest uppercase text-slate-500 hover:text-purple-400 transition-colors" href="/pages/privacy-policy.html">Privacy Policy</a>
+            </div>
+        </div>
+    </footer>
+</body>
 </html>
