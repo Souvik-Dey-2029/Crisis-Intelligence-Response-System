@@ -833,6 +833,27 @@
     // ===== SOS =====
     let sosActive = false;
 
+    async function getCurrentCoords() {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve({ latitude: 22.5726, longitude: 88.3639, fallback: true });
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            resolve({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              fallback: false
+            });
+          },
+          () => resolve({ latitude: 22.5726, longitude: 88.3639, fallback: true }),
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
+        );
+      });
+    }
+
     async function triggerSOS(type = 'sos') {
       if (sosActive) { showToast('⚠️ SOS already active', 'warning'); return; }
       sosActive = true;
@@ -840,9 +861,43 @@
       const label = labels[type] || 'SOS TRIGGERED';
 
       setStatus('EMERGENCY — SOS ACTIVE', 'red');
-      showToast(`🚨 ${label.toUpperCase()} — Emergency services dispatched!`, 'critical');
+      showToast(`🚨 ${label.toUpperCase()} — Sending emergency request...`, 'critical');
 
-      addAlert({ type, severity: 'critical', title: label, description: 'SOS triggered by Operator 01 at Sector 7G. Emergency services notified.' });
+      let dispatchConfirmed = false;
+      let dispatchText = 'Awaiting dispatch confirmation.';
+      try {
+        const coords = await getCurrentCoords();
+        const response = await fetch('/api/portal/sos-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            emergencyType: type,
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            language: 'en'
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          dispatchConfirmed = true;
+          dispatchText = `${data.helpline_name || 'Emergency services'} notified (${data.helpline_number || '112'})`;
+          showToast(`✅ Dispatch confirmed via ${data.helpline_name || 'emergency network'} (${data.helpline_number || '112'})`, 'success');
+        } else {
+          showToast('⚠️ Dispatch confirmation unavailable. Call 112 immediately.', 'warning');
+        }
+      } catch (_) {
+        showToast('⚠️ Network issue. Please call 112 immediately.', 'warning');
+      }
+
+      addAlert({
+        type,
+        severity: 'critical',
+        title: label,
+        description: dispatchConfirmed
+          ? `SOS triggered by Operator 01 at Sector 7G. ${dispatchText}.`
+          : 'SOS triggered by Operator 01 at Sector 7G. Dispatch not confirmed in-app; call 112 immediately.'
+      });
 
       showAIPanel('⏳ Getting emergency guidance from ResQAI...');
 
@@ -850,7 +905,6 @@
       showAIPanel(`🚨 <strong>${label}</strong> — AI Guidance:\n\n${guidance}`);
       window.VoiceSystem?.handleAIResponse(guidance, type);
 
-      setTimeout(() => showToast('✅ Police & Ambulance dispatched to Sector 7G', 'info'), 2000);
       setTimeout(() => { sosActive = false; setStatus('STATUS: SECURE', 'green'); }, 30000);
     }
 
