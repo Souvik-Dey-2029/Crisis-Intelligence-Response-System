@@ -50,7 +50,7 @@ async function createTables() {
         db.exec(`
             CREATE TABLE IF NOT EXISTS emergencies (
                 id TEXT PRIMARY KEY,
-                system_id TEXT,
+                system_id TEXT NOT NULL,
                 description TEXT NOT NULL,
                 location TEXT NOT NULL,
                 severity TEXT DEFAULT 'high',
@@ -65,7 +65,7 @@ async function createTables() {
 
             CREATE TABLE IF NOT EXISTS chat_history (
                 id TEXT PRIMARY KEY,
-                system_id TEXT,
+                system_id TEXT NOT NULL,
                 user_message TEXT NOT NULL,
                 bot_response TEXT NOT NULL,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -127,7 +127,7 @@ async function createTables() {
 
             CREATE TABLE IF NOT EXISTS activity_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                system_id TEXT,
+                system_id TEXT NOT NULL,
                 action TEXT NOT NULL,
                 details TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -143,6 +143,8 @@ async function createTables() {
             CREATE INDEX IF NOT EXISTS idx_events_system ON system_events(system_id);
             CREATE INDEX IF NOT EXISTS idx_incidents_system ON incidents(system_id);
             CREATE INDEX IF NOT EXISTS idx_sos_events_system ON sos_events(system_id);
+            CREATE INDEX IF NOT EXISTS idx_activity_logs_system ON activity_logs(system_id);
+            CREATE INDEX IF NOT EXISTS idx_chat_history_system ON chat_history(system_id);
         `, (err) => { if (err) console.warn('Table creation note:', err.message); resolve(); });
     });
 }
