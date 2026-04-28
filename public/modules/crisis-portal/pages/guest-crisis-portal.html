@@ -5,6 +5,10 @@
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>ResQAI | Guest Crisis Portal</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
@@ -120,23 +124,6 @@
         class="w-full py-4 bg-primary-container text-on-primary-container rounded-lg font-headline font-bold text-xs tracking-tighter hover:bg-primary transition-all shadow-[0_0_20px_rgba(255,83,82,0.3)]">
         INITIATE SOS
       </button>
-    </div>
-    <div class="px-4 py-6 border-t border-white/5">
-      <div class="flex items-center gap-4 px-6 py-4 mb-4">
-        <div
-          class="w-10 h-10 rounded-full bg-surface-container-high border border-white/10 flex items-center justify-center overflow-hidden">
-          <img alt="Operator"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFnjReDhdt6YKdrfoPT4YJ19pWui7xpiD2mSOGge9ytDqAGN_PVdWyycZj6NYm3KwE8QxmPnFFnoL_YDOdA3Ce2MQj5BP1nQiIMdReMpAB3fNG3yKDKqmI3lzvzFllkMz9W3dAWA75GLr2ofQdzemCeGOPTZKDYqQSLnjKA1RvOp0l5kQZVrAZR7LE0LReRpl4zoiN7Nney-e172Srh1RjBxiPdg_4SshTV1eDeOQCsMC84aXPMzTsnpZ2dc6fny9NatMHtuzzkos" />
-        </div>
-        <div>
-          <p class="text-[10px] text-slate-500 font-headline">OPERATOR 01</p>
-          <p class="text-[10px] text-rose-400 font-headline">SECTOR 7G - ACTIVE</p>
-        </div>
-      </div>
-      <a class="flex items-center gap-4 text-slate-500 px-6 py-2 hover:text-rose-400 transition-colors cursor-pointer">
-        <span class="material-symbols-outlined text-sm">settings</span>
-        <span class="font-headline text-[10px] uppercase">Settings</span>
-      </a>
     </div>
   </aside>
 
@@ -315,29 +302,75 @@
               </div>
             </div>
           </div>
-          <div class="relative flex-1 bg-surface-container-low rounded-3xl overflow-hidden border border-white/5">
-            <img alt="Map View" class="w-full h-full object-cover opacity-60 mix-blend-luminosity"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjjqoCaybHmk0eF3qsJG4NTkCbNpLApWZ6bZCh4x55Hnpuyif9KKnbo84ALRQcDKoRKniu7SXSF8bEq7Q5oS_gkgK-DDEIj6DDoLWhtDSGR2DGHfRKEfUAS7PnqPJbf1jeAbn_4yVk4jZo8FFgQ9RugvmRgYb1sqK9a13J1omyJAKMQsicCaXOHF6ZYAy5ThSgf4pIC4raUhRXe_6zkrw64_vobgguSSfPaeLWiAlZ9WTTPiBBC4grIdGFrIQa3d1iL2mfn1iVbF0" />
-            <div class="absolute inset-0 pointer-events-none">
-              <div
-                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border border-secondary/20 rounded-full animate-ping">
-              </div>
-              <div
-                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-secondary rounded-full shadow-[0_0_10px_#14d1ff]">
-              </div>
-              <div
-                class="absolute top-10 right-10 w-4 h-4 bg-primary-container rounded-full animate-pulse shadow-[0_0_10px_#ff5352]">
-              </div>
-              <div
-                class="absolute bottom-20 left-10 w-4 h-4 bg-primary-container rounded-full animate-pulse shadow-[0_0_10px_#ff5352]">
-              </div>
-            </div>
-            <div
-              class="absolute bottom-4 left-4 right-4 bg-surface-dim/80 backdrop-blur-md p-4 rounded-2xl border border-white/10">
+          <style>
+  .leaflet-container { background-color: transparent !important; }
+  #live-safety-map {
+    background:
+      radial-gradient(circle at 34% 42%, rgba(255, 83, 82, 0.2), transparent 18%),
+      radial-gradient(circle at 66% 58%, rgba(20, 209, 255, 0.18), transparent 20%),
+      linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(8, 13, 20, 0.98));
+  }
+  #live-safety-map::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.18;
+    background-image:
+      linear-gradient(rgba(166, 230, 255, 0.16) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(166, 230, 255, 0.16) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+  #live-safety-map.map-leaflet-ready::before {
+    display: none;
+  }
+  .map-fallback-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .map-fallback-label {
+    position: absolute;
+    z-index: 2;
+    padding: 6px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    background: rgba(16, 20, 26, 0.74);
+    color: #dfe2eb;
+    font: 700 10px/1 "Space Grotesk", sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+  }
+  .map-fallback-pin {
+    position: absolute;
+    z-index: 3;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 2px solid rgba(255, 255, 255, 0.86);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px currentColor;
+  }
+  .pulse-dot {
+    width: 12px; height: 12px; background-color: #14d1ff; border-radius: 50%;
+    box-shadow: 0 0 10px #14d1ff, 0 0 20px #14d1ff; position: relative;
+  }
+  .pulse-dot::after {
+    content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    border-radius: 50%; border: 2px solid rgba(20, 209, 255, 0.5);
+    animation: map-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  @keyframes map-ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+</style>
+<div class="relative flex-1 bg-surface-container-low rounded-3xl overflow-hidden border border-white/5" style="min-height: 350px;">
+  <div id="live-safety-map" class="absolute inset-0 z-0"></div>
+  <div class="absolute bottom-4 left-4 right-4 bg-surface-dim/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 pointer-events-auto z-20">
               <div class="flex justify-between items-center">
                 <div>
                   <p class="text-[10px] text-slate-500 font-headline uppercase">Nearest Safe Zone</p>
-                  <p class="text-sm font-bold font-headline">Sector 7 Central Bunker</p>
+                  <p id="nearest-safe-zone-name" class="text-sm font-bold font-headline">Locating nearest safe zone...</p>
+                  <p id="nearest-safe-zone-meta" class="text-[10px] text-slate-500 font-headline uppercase mt-1">Using live risk data</p>
                 </div>
                 <button id="navigate-btn"
                   class="bg-secondary px-4 py-2 rounded-lg text-xs font-bold text-on-secondary">NAVIGATE</button>
@@ -515,6 +548,7 @@
         <div class="bg-surface-container-low border border-white/5 rounded-2xl p-6">
           <h2 class="font-headline text-sm font-black uppercase tracking-widest text-slate-400 mb-4">Deployment Map</h2>
           <div class="relative h-64 rounded-2xl overflow-hidden">
+            <div id="deployment-map" class="absolute inset-0 z-10"></div>
             <img
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjjqoCaybHmk0eF3qsJG4NTkCbNpLApWZ6bZCh4x55Hnpuyif9KKnbo84ALRQcDKoRKniu7SXSF8bEq7Q5oS_gkgK-DDEIj6DDoLWhtDSGR2DGHfRKEfUAS7PnqPJbf1jeAbn_4yVk4jZo8FFgQ9RugvmRgYb1sqK9a13J1omyJAKMQsicCaXOHF6ZYAy5ThSgf4pIC4raUhRXe_6zkrw64_vobgguSSfPaeLWiAlZ9WTTPiBBC4grIdGFrIQa3d1iL2mfn1iVbF0"
               alt="Map" class="w-full h-full object-cover opacity-60" />
@@ -528,7 +562,7 @@
               class="absolute bottom-12 left-1/2 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]">
             </div>
           </div>
-          <p class="text-[10px] text-slate-500 font-headline mt-3 text-center">LIVE UNIT POSITIONS — SECTOR 7G</p>
+          <p class="text-[10px] text-slate-500 font-headline mt-3 text-center">LIVE UNIT POSITIONS - acquiring location</p>
         </div>
       </div>
     </div>
@@ -592,8 +626,8 @@
   <script type="module">
 
     // ===== CONFIG =====
-    const BASE_URL = window.location.origin;
-    const AI_ENDPOINT = `${BASE_URL}/api/chat`;
+    const API_BASE_URL = window.location.protocol.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+    const AI_ENDPOINT = `${API_BASE_URL}/api/chat`;
 
     // ===== AI SERVICE =====
     async function askAI(message) {
@@ -775,6 +809,7 @@
       document.querySelectorAll('[data-section]').forEach(s => s.classList.add('hidden'));
       const target = document.querySelector(`[data-section="${pageId}"]`);
       if (target) target.classList.remove('hidden');
+      if (pageId === 'deployment') window.__refreshDeploymentMap?.();
 
       document.querySelectorAll('.nav-link').forEach(link => {
         const active = link.getAttribute('data-page') === pageId;
@@ -826,6 +861,54 @@
       renderAlerts();
     }
 
+    function normalizeAlertType(type = '') {
+      const value = String(type).toLowerCase();
+      if (value.includes('wildfire') || value.includes('fire')) return 'fire';
+      if (value.includes('flood')) return 'flood';
+      if (value.includes('earthquake') || value.includes('quake')) return 'quake';
+      if (value.includes('cyclone') || value.includes('storm') || value.includes('weather')) return 'other';
+      return 'other';
+    }
+
+    function normalizeSeverity(severity = '') {
+      const value = String(severity).toLowerCase();
+      if (value === 'critical' || value === 'high') return 'critical';
+      if (value === 'medium' || value === 'moderate') return 'medium';
+      return 'low';
+    }
+
+    function setLiveAlerts(liveAlerts) {
+      const mapped = (liveAlerts || []).slice(0, 3).map((alert, index) => {
+        const severity = normalizeSeverity(alert.severity);
+        return {
+          id: alert.id || `live-${index}`,
+          type: normalizeAlertType(alert.type),
+          severity,
+          title: alert.title || `${alert.type || 'Crisis'} Alert`,
+          description: alert.aiExplanation || alert.description || 'Live hazard detected near your region.',
+          distance: typeof alert.distance === 'number' ? `${alert.distance} KM` : (alert.location || 'LIVE'),
+          ago: alert.source || 'LIVE FEED',
+          icon: {
+            fire: 'local_fire_department',
+            flood: 'water_drop',
+            quake: 'earthquake',
+            other: 'warning'
+          }[normalizeAlertType(alert.type)] || 'warning',
+          border: { critical: 'border-rose-500', medium: 'border-yellow-500', low: 'border-green-500' }[severity],
+          badge: { critical: 'text-rose-400', medium: 'text-yellow-500', low: 'text-green-500' }[severity],
+          lat: alert.lat,
+          lng: alert.lng,
+          source: alert.source,
+          safetySteps: alert.aiSafetySteps || []
+        };
+      });
+
+      if (mapped.length) {
+        alerts.splice(0, alerts.length, ...mapped);
+        renderAlerts();
+      }
+    }
+
     // ===== STATUS =====
     function setStatus(text, color) {
       const el = document.getElementById('status-indicator');
@@ -874,7 +957,8 @@
       let dispatchText = 'Awaiting dispatch confirmation.';
       try {
         const coords = await getCurrentCoords();
-        const response = await fetch('/api/portal/sos-log', {
+        window.__updateLiveSafetyMapLocation?.(coords.latitude, coords.longitude, !coords.fallback);
+        const response = await fetch(`${API_BASE_URL}/api/portal/sos-log`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -932,11 +1016,28 @@
             pos => {
               const { latitude: lat, longitude: lng } = pos.coords;
               document.getElementById('location-display').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+              window.__updateLiveSafetyMapLocation?.(lat, lng, true);
               showToast(`✅ Location broadcasted: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, 'success');
             },
             () => showToast('✅ Location broadcasted: SECTOR 7G', 'success')
           );
         } else showToast('✅ Location broadcasted: SECTOR 7G', 'success');
+      });
+    }
+
+    function initSafeZoneNavigation() {
+      const currentBtn = document.getElementById('navigate-btn');
+      if (!currentBtn) return;
+      const btn = currentBtn.cloneNode(true);
+      currentBtn.replaceWith(btn);
+      btn.addEventListener('click', () => {
+        const destination = window.__getLiveSafetyDestination?.();
+        if (!destination) {
+          showToast('No verified safe zone route is available yet. Keep moving away from visible hazards.', 'warning');
+          return;
+        }
+        showToast(`Navigation ready: ${destination.name} (${destination.distance || 'nearby'})`, 'info');
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination.lat},${destination.lng}`, '_blank', 'noopener');
       });
     }
 
@@ -1042,10 +1143,10 @@
 
     // ===== DEPLOYMENT PAGE =====
     const deployUnits = [
-      { id: 'U-01', name: 'Fire Unit Alpha', sector: 'Zone B', status: 'ON SCENE', color: 'text-rose-400' },
-      { id: 'U-02', name: 'Ambulance Delta', sector: 'Main Intersection', status: 'EN ROUTE', color: 'text-yellow-400' },
-      { id: 'U-03', name: 'Police Unit 7', sector: 'Sector 4', status: 'STANDBY', color: 'text-green-400' },
-      { id: 'U-04', name: 'Rescue Team Gamma', sector: 'Sector 7G', status: 'DEPLOYED', color: 'text-cyan-400' },
+      { id: 'U-01', name: 'Fire Unit Alpha', sector: '0.8 km SW of you', status: 'ON SCENE', color: 'text-rose-400' },
+      { id: 'U-02', name: 'Ambulance Delta', sector: '1.1 km NE of you', status: 'EN ROUTE', color: 'text-yellow-400' },
+      { id: 'U-03', name: 'Police Unit 7', sector: '0.6 km NW of you', status: 'STANDBY', color: 'text-green-400' },
+      { id: 'U-04', name: 'Rescue Team Gamma', sector: '0.9 km E of you', status: 'DEPLOYED', color: 'text-cyan-400' },
     ];
     function renderDeployment() {
       const c = document.getElementById('deployment-units');
@@ -1128,6 +1229,373 @@
       });
     }
 
+    // ===== LIVE SAFETY MAP =====
+    function initLiveSafetyMap() {
+      const el = document.getElementById('live-safety-map');
+      if (!el || el.dataset.ready === 'true') return;
+      el.dataset.ready = 'true';
+
+      const fallbackUser = [22.5732, 88.3647];
+      let activeIncidentType = 'general';
+      let refreshTimer = null;
+
+      function renderFallback() {
+        el.innerHTML = `
+          <svg class="map-fallback-layer" viewBox="0 0 520 360" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M56 282 C140 230 184 244 244 182 S362 96 468 76" fill="none" stroke="rgba(166,230,255,0.22)" stroke-width="22" stroke-linecap="round" />
+            <path d="M56 282 C140 230 184 244 244 182 S362 96 468 76" fill="none" stroke="#a6e6ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 12" />
+            <circle cx="160" cy="176" r="64" fill="rgba(255,83,82,0.16)" stroke="rgba(255,83,82,0.44)" stroke-width="2" />
+            <path d="M86 94 L186 74 L262 118 L370 96 L450 132" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2" />
+            <path d="M96 238 L200 214 L304 248 L430 210" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" />
+          </svg>
+          <div class="map-fallback-label" style="left: 7%; bottom: 18%;">You</div>
+          <div class="map-fallback-label" style="right: 8%; top: 16%;">Safe Zone</div>
+          <div class="map-fallback-label" style="left: 21%; top: 38%; color: #ffb3ae;">Hot Zone</div>
+          <div id="map-location-status" class="map-fallback-label" style="left: 6%; top: 6%; color: #a6e6ff;">Locating...</div>
+          <div class="map-fallback-pin" style="left: 18%; top: 78%; color: #14d1ff; background: #14d1ff;"></div>
+          <div class="map-fallback-pin" style="left: 90%; top: 21%; color: #a6e6ff; background: #a6e6ff;"></div>
+          <div class="map-fallback-pin" style="left: 31%; top: 49%; color: #ff5352; background: #ff5352;"></div>
+          <div class="map-fallback-pin" style="left: 48%; top: 53%; color: #ff5352; background: #ff5352;"></div>
+          <div class="map-fallback-pin" style="left: 62%; top: 41%; color: #ff5352; background: #ff5352;"></div>
+        `;
+      }
+
+      renderFallback();
+
+      if (!window.L) return;
+      el.replaceChildren();
+      el.classList.add('map-leaflet-ready');
+
+      const map = L.map(el, {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        boxZoom: true,
+        keyboard: true,
+        tap: true,
+      }).setView(fallbackUser, 15);
+
+      const tileProviders = [
+        {
+          name: 'Carto Voyager',
+          url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          options: { subdomains: 'abcd', maxZoom: 20, crossOrigin: true }
+        },
+        {
+          name: 'Esri Street',
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+          options: { maxZoom: 19, crossOrigin: true }
+        },
+        {
+          name: 'Carto Dark Matter',
+          url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          options: { subdomains: 'abcd', maxZoom: 20, crossOrigin: true }
+        },
+        {
+          name: 'OSM HOT',
+          url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+          options: { subdomains: 'abc', maxZoom: 19, crossOrigin: true }
+        }
+      ];
+      let activeTileProvider = 0;
+      let tileLayer = null;
+
+      function setMapTiles(providerIndex = 0) {
+        if (tileLayer) map.removeLayer(tileLayer);
+        const provider = tileProviders[providerIndex] || tileProviders[0];
+        let tileErrors = 0;
+
+        tileLayer = L.tileLayer(provider.url, {
+          ...provider.options,
+          className: 'live-safety-map-tiles'
+        }).addTo(map);
+
+        tileLayer.on('tileerror', () => {
+          tileErrors += 1;
+          if (tileErrors >= 2 && activeTileProvider < tileProviders.length - 1) {
+            activeTileProvider += 1;
+            setMapTiles(activeTileProvider);
+          }
+        });
+      }
+
+      setMapTiles();
+      L.control.zoom({ position: 'topright' }).addTo(map);
+
+      const unitIcon = L.divIcon({
+        className: '',
+        html: '<div style="width:16px;height:16px;border-radius:999px;background:#ff5352;border:2px solid rgba(255,255,255,0.9);box-shadow:0 0 18px rgba(255,83,82,0.9);"></div>',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+      const userIcon = L.divIcon({
+        className: '',
+        html: '<div class="pulse-dot"></div>',
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+      });
+      const safeIcon = L.divIcon({
+        className: '',
+        html: '<div style="width:20px;height:20px;border-radius:999px;background:#a6e6ff;border:2px solid rgba(255,255,255,0.9);box-shadow:0 0 22px rgba(166,230,255,0.9);"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      });
+
+      const routeLine = L.polyline([], {
+        color: '#a6e6ff',
+        weight: 4,
+        opacity: 0.82,
+        dashArray: '8 10',
+      }).addTo(map);
+      const userMarker = L.marker(fallbackUser, { icon: userIcon, title: 'Your live location' }).addTo(map);
+      let safeMarker = null;
+      let hazardLayers = [];
+      let unitMarkers = [];
+      let lastSafeZone = null;
+      let lastUserPosition = fallbackUser;
+
+      function updateLocationText(lat, lng, isLive) {
+        const text = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        const locationDisplay = document.getElementById('location-display');
+        if (locationDisplay) locationDisplay.textContent = text;
+      }
+
+      function setSafeZonePanel(zone) {
+        const nameEl = document.getElementById('nearest-safe-zone-name');
+        const metaEl = document.getElementById('nearest-safe-zone-meta');
+        if (!nameEl || !metaEl) return;
+
+        if (!zone) {
+          nameEl.textContent = 'No verified safe zone found nearby';
+          metaEl.textContent = 'Follow official evacuation guidance';
+          return;
+        }
+
+        nameEl.textContent = zone.name || 'Nearest Safe Zone';
+        metaEl.textContent = `${(zone.type || 'safe zone').replace('_', ' ')} • ${zone.distance || 'nearby'}`;
+      }
+
+      function clearDynamicLayers() {
+        hazardLayers.forEach(layer => map.removeLayer(layer));
+        unitMarkers.forEach(marker => map.removeLayer(marker));
+        hazardLayers = [];
+        unitMarkers = [];
+      }
+
+      function getHazardRadius(alert) {
+        const severity = String(alert?.severity || '').toLowerCase();
+        if (severity === 'critical' || severity === 'high') return 900;
+        if (severity === 'medium') return 650;
+        return 420;
+      }
+
+      async function fetchLiveCrisisContext(lat, lng) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/crisis/nearby?lat=${lat}&lng=${lng}`);
+          if (!response.ok) throw new Error(`Crisis API ${response.status}`);
+          const data = await response.json();
+          const liveAlerts = data.alerts || [];
+          setLiveAlerts(liveAlerts);
+
+          clearDynamicLayers();
+          const nearbyHazards = liveAlerts
+            .filter(alert => Number.isFinite(alert.lat) && Number.isFinite(alert.lng))
+            .slice(0, 4);
+
+          nearbyHazards.forEach(alert => {
+            const coords = [alert.lat, alert.lng];
+            hazardLayers.push(L.circle(coords, {
+              radius: getHazardRadius(alert),
+              color: '#ff5352',
+              fillColor: '#ff5352',
+              fillOpacity: 0.16,
+              opacity: 0.64,
+              weight: 2,
+            }).addTo(map));
+            unitMarkers.push(L.marker(coords, { icon: unitIcon, title: alert.title || 'Live hazard' }).addTo(map));
+          });
+
+          activeIncidentType = normalizeAlertType(liveAlerts[0]?.type || 'general');
+          if (activeIncidentType === 'quake') activeIncidentType = 'earthquake';
+          await fetchRealSafeZone(lat, lng, activeIncidentType);
+        } catch (error) {
+          console.warn('[ResQAI] Live crisis context unavailable:', error.message);
+          await fetchRealSafeZone(lat, lng, activeIncidentType);
+        }
+      }
+
+      function getClientSafeZoneQueries(incidentType) {
+        const type = String(incidentType || 'general').toLowerCase();
+        if (type === 'fire') return ['park', 'playground', 'hospital'];
+        if (type === 'flood') return ['school', 'community centre', 'shelter'];
+        if (type === 'earthquake' || type === 'quake') return ['park', 'playground', 'school'];
+        if (type === 'medical') return ['hospital', 'clinic'];
+        return ['hospital', 'police station', 'school', 'park', 'community centre'];
+      }
+
+      function getClientViewbox(lat, lng, radiusKm = 15) {
+        const delta = radiusKm / 111;
+        const lngDelta = delta / Math.max(0.2, Math.cos(lat * Math.PI / 180));
+        return [lng - lngDelta, lat + delta, lng + lngDelta, lat - delta].join(',');
+      }
+
+      function mapClientSafeZoneType(name) {
+        const value = String(name || '').toLowerCase();
+        if (value.includes('hospital') || value.includes('clinic')) return 'hospital';
+        if (value.includes('police')) return 'police';
+        if (value.includes('park') || value.includes('playground')) return 'open_ground';
+        return 'shelter';
+      }
+
+      function distanceKm(lat1, lng1, lat2, lng2) {
+        const toRad = deg => deg * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLng = toRad(lng2 - lng1);
+        const a = Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+        return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+
+      async function fetchClientSafeZone(lat, lng, incidentType) {
+        const viewbox = getClientViewbox(lat, lng);
+        const results = [];
+
+        for (const query of getClientSafeZoneQueries(incidentType)) {
+          const params = new URLSearchParams({
+            format: 'jsonv2',
+            limit: '3',
+            q: query,
+            viewbox,
+            bounded: '1'
+          });
+
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`);
+            if (!response.ok) continue;
+            const data = await response.json();
+            data.forEach(item => {
+              const zoneLat = Number(item.lat);
+              const zoneLng = Number(item.lon);
+              if (!Number.isFinite(zoneLat) || !Number.isFinite(zoneLng)) return;
+              const km = distanceKm(lat, lng, zoneLat, zoneLng);
+              if (km > 15) return;
+              results.push({
+                name: item.name || String(item.display_name || '').split(',')[0] || query,
+                lat: zoneLat,
+                lng: zoneLng,
+                distance: `${km.toFixed(1)} km`,
+                distanceKm: km,
+                type: mapClientSafeZoneType(query),
+                address: item.display_name || '',
+                source: 'openstreetmap_nominatim'
+              });
+            });
+          } catch (error) {
+            console.warn(`[ResQAI] Browser OSM lookup failed for ${query}:`, error.message);
+          }
+        }
+
+        return results.sort((a, b) => a.distanceKm - b.distanceKm)[0] || null;
+      }
+
+      async function fetchRealSafeZone(lat, lng, incidentType = 'general') {
+        try {
+          const url = `${API_BASE_URL}/api/portal/safe-zones?userLat=${lat}&userLng=${lng}&incidentType=${encodeURIComponent(incidentType)}&category=all`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`Safe zone API ${response.status}`);
+          const data = await response.json();
+          const zone = (data.safe_zones || [])[0] || await fetchClientSafeZone(lat, lng, incidentType);
+          lastSafeZone = zone || null;
+          setSafeZonePanel(lastSafeZone);
+
+          if (!lastSafeZone) {
+            if (safeMarker) map.removeLayer(safeMarker);
+            safeMarker = null;
+            routeLine.setLatLngs([]);
+            return;
+          }
+
+          const safeCoords = [lastSafeZone.lat, lastSafeZone.lng];
+          if (safeMarker) safeMarker.setLatLng(safeCoords);
+          else safeMarker = L.marker(safeCoords, { icon: safeIcon, title: lastSafeZone.name || 'Nearest safe zone' }).addTo(map);
+          routeLine.setLatLngs([[lat, lng], safeCoords]);
+          map.fitBounds(L.latLngBounds([[lat, lng], safeCoords]).pad(0.45), {
+            animate: true,
+            maxZoom: 15,
+            paddingTopLeft: [18, 18],
+            paddingBottomRight: [18, 116]
+          });
+        } catch (error) {
+          console.warn('[ResQAI] Safe zone lookup unavailable:', error.message);
+          const zone = await fetchClientSafeZone(lat, lng, incidentType);
+          lastSafeZone = zone || null;
+          setSafeZonePanel(lastSafeZone);
+          if (lastSafeZone) {
+            const safeCoords = [lastSafeZone.lat, lastSafeZone.lng];
+            if (safeMarker) safeMarker.setLatLng(safeCoords);
+            else safeMarker = L.marker(safeCoords, { icon: safeIcon, title: lastSafeZone.name || 'Nearest safe zone' }).addTo(map);
+            routeLine.setLatLngs([[lat, lng], safeCoords]);
+            map.fitBounds(L.latLngBounds([[lat, lng], safeCoords]).pad(0.45), {
+              animate: true,
+              maxZoom: 15,
+              paddingTopLeft: [18, 18],
+              paddingBottomRight: [18, 116]
+            });
+          }
+        }
+      }
+
+      function updateMapLocation(lat, lng, isLive = true) {
+        const liveUser = [lat, lng];
+        lastUserPosition = liveUser;
+        userMarker.setLatLng(liveUser);
+        if (!lastSafeZone) map.setView(liveUser, isLive ? 15 : 14, { animate: true });
+        updateLocationText(lat, lng, isLive);
+        window.__updateDeploymentMapLocation?.(lat, lng, isLive);
+        fetchLiveCrisisContext(lat, lng);
+
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(() => fetchLiveCrisisContext(lat, lng), 120000);
+      }
+
+      window.__updateLiveSafetyMapLocation = updateMapLocation;
+      window.__getLiveSafetyDestination = () => lastSafeZone;
+      window.__focusLiveSafetyMap = () => {
+        if (lastSafeZone) {
+          map.fitBounds(L.latLngBounds([lastUserPosition, [lastSafeZone.lat, lastSafeZone.lng]]).pad(0.45), {
+            animate: true,
+            maxZoom: 15,
+            paddingTopLeft: [18, 18],
+            paddingBottomRight: [18, 116]
+          });
+        } else {
+          map.setView(lastUserPosition, 15, { animate: true });
+        }
+      };
+
+      setTimeout(() => {
+        map.invalidateSize();
+        window.__focusLiveSafetyMap?.();
+      }, 250);
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => updateMapLocation(pos.coords.latitude, pos.coords.longitude, true),
+          () => updateMapLocation(fallbackUser[0], fallbackUser[1], false),
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 15000 }
+        );
+        navigator.geolocation.watchPosition(
+          pos => updateMapLocation(pos.coords.latitude, pos.coords.longitude, true),
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+        );
+      } else {
+        updateMapLocation(fallbackUser[0], fallbackUser[1], false);
+      }
+    }
+
     // ===== INTEL PAGE =====
     function initIntel() {
       document.getElementById('intel-refresh-btn')?.addEventListener('click', async () => {
@@ -1150,7 +1618,7 @@
     // ===== DEPLOY PAGE =====
     function initDeployment() {
       const typeNames = ['Police Unit', 'Fire Unit', 'Rescue Team', 'Medical Unit'];
-      const sectorNames = ['Sector 1', 'Sector 2', 'Sector 5', 'Zone A'];
+      const sectorNames = ['0.7 km north of you', '0.9 km east of you', '1.2 km south of you', '0.6 km west of you'];
       document.getElementById('deploy-unit-btn')?.addEventListener('click', () => {
         const u = {
           id: `U-0${deployUnits.length + 1}`,
@@ -1162,6 +1630,126 @@
         renderDeployment();
         showToast(`✅ ${u.name} deployed to ${u.sector}`, 'info');
       });
+    }
+
+    function initDeploymentMap() {
+      const el = document.getElementById('deployment-map');
+      if (!el || el.dataset.ready === 'true' || !window.L) return;
+      el.dataset.ready = 'true';
+
+      const fallbackUser = [22.5732, 88.3647];
+      const map = L.map(el, {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        boxZoom: true,
+        keyboard: true,
+        tap: true,
+      }).setView(fallbackUser, 14);
+
+      const providers = [
+        { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', options: { subdomains: 'abcd', maxZoom: 20, crossOrigin: true } },
+        { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', options: { maxZoom: 19, crossOrigin: true } },
+        { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', options: { subdomains: 'abcd', maxZoom: 20, crossOrigin: true } }
+      ];
+      let providerIndex = 0;
+      let tiles = null;
+      const setTiles = () => {
+        if (tiles) map.removeLayer(tiles);
+        let errors = 0;
+        const provider = providers[providerIndex] || providers[0];
+        tiles = L.tileLayer(provider.url, provider.options).addTo(map);
+        tiles.on('tileerror', () => {
+          errors += 1;
+          if (errors >= 2 && providerIndex < providers.length - 1) {
+            providerIndex += 1;
+            setTiles();
+          }
+        });
+      };
+      setTiles();
+      L.control.zoom({ position: 'topright' }).addTo(map);
+
+      const userIcon = L.divIcon({
+        className: '',
+        html: '<div class="pulse-dot"></div>',
+        iconSize: [12, 12],
+        iconAnchor: [6, 6],
+      });
+      const makeUnitIcon = color => L.divIcon({
+        className: '',
+        html: `<div style="width:14px;height:14px;border-radius:999px;background:${color};border:2px solid rgba(255,255,255,0.9);box-shadow:0 0 18px ${color};"></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+
+      const unitStyles = ['#ff5352', '#facc15', '#22c55e', '#14d1ff', '#b76dff', '#fb923c'];
+      const offsets = [
+        [-0.0048, -0.0056],
+        [0.0062, 0.0049],
+        [0.0044, -0.0042],
+        [-0.0028, 0.0071],
+        [0.0075, -0.0018],
+        [-0.0068, 0.0033],
+      ];
+      const bearings = ['SW', 'NE', 'NW', 'E', 'N', 'SE'];
+      const userMarker = L.marker(fallbackUser, { icon: userIcon, title: 'Your live location' }).addTo(map);
+      const unitMarkers = deployUnits.map((unit, index) =>
+        L.marker(fallbackUser, {
+          icon: makeUnitIcon(unitStyles[index % unitStyles.length]),
+          title: unit.name
+        }).addTo(map)
+      );
+
+      function updateDeploymentCaption(lat, lng, isLive) {
+        document.querySelectorAll('p').forEach(p => {
+          if (p.textContent.includes('LIVE UNIT POSITIONS')) {
+            p.textContent = isLive
+              ? `LIVE UNIT POSITIONS - ${lat.toFixed(4)}, ${lng.toFixed(4)}`
+              : 'LIVE UNIT POSITIONS - fallback location';
+          }
+        });
+      }
+
+      function updateDeploymentMap(lat, lng, isLive = true) {
+        const user = [lat, lng];
+        const bounds = L.latLngBounds([user]);
+        userMarker.setLatLng(user);
+
+        unitMarkers.forEach((marker, index) => {
+          const offset = offsets[index % offsets.length];
+          const coords = [lat + offset[0], lng + offset[1]];
+          marker.setLatLng(coords);
+          bounds.extend(coords);
+        });
+
+        deployUnits.forEach((unit, index) => {
+          const offset = offsets[index % offsets.length];
+          const km = Math.sqrt((offset[0] * 111) ** 2 + (offset[1] * 102) ** 2);
+          unit.sector = `${km.toFixed(1)} km ${bearings[index % bearings.length]} of you`;
+        });
+        renderDeployment();
+        updateDeploymentCaption(lat, lng, isLive);
+
+        map.fitBounds(bounds.pad(0.32), {
+          animate: true,
+          maxZoom: 14,
+          padding: [18, 18]
+        });
+      }
+
+      window.__updateDeploymentMapLocation = updateDeploymentMap;
+      window.__refreshDeploymentMap = () => {
+        setTimeout(() => {
+          map.invalidateSize();
+          const center = userMarker.getLatLng();
+          updateDeploymentMap(center.lat, center.lng, true);
+        }, 120);
+      };
+
+      updateDeploymentMap(fallbackUser[0], fallbackUser[1], false);
     }
 
     // ===== MOBILE MENU =====
@@ -1185,8 +1773,11 @@
       initMobileMenu();
       startClock();
       initNav();
+      initLiveSafetyMap();
+      initDeploymentMap();
       renderAlerts();
       initSOS();
+      initSafeZoneNavigation();
       initVoice();
       initAIBar();
       initAudioKillSwitch();
@@ -1205,3 +1796,5 @@
 </body>
 
 </html>
+
+

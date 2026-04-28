@@ -29,6 +29,7 @@ import googleAuthRouter from './api/routes/google-auth.js';
 import customSystemRoutes from './api/routes/custom-system.js';
 import echoPlusRoutes from './api/routes/echo-plus.js';
 import weaponDetectRoutes from './api/routes/weapon-detect.js';
+import crisisRouter from './api/routes/crisis.js';
 
 // Import validation utilities
 import { validateEnvironment, getAIStatus } from './utils/validateEnv.js';
@@ -161,6 +162,7 @@ app.use('/api/portal', portalRoutes);
 app.use('/api/custom-system', customSystemRoutes);
 app.use('/api/echo-plus', echoPlusRoutes);
 app.use('/api/weapon', weaponDetectRoutes);
+app.use('/api/crisis', crisisRouter);
 
 // ==================== SERVE FRONTEND ====================
 

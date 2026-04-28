@@ -96,7 +96,11 @@ src/
 ### 🔴 Crisis Portal
 - **SOS Activation**: One-tap emergency signal with automated location broadcasting.
 - **Live Guidance**: Step-by-step AI instructions for various scenarios (Fire, Medical, Security).
-- **Incident Map**: Visual representation of active threats and safe zones.
+- **Live Safety Map**: Leaflet-powered map centered on the user's browser geolocation with a glowing "YOU" marker.
+- **Real-Time Crisis Feeds**: Pulls live hazard context from NASA EONET, USGS global earthquakes, and OpenWeather alerts.
+- **Dynamic Safe-Zone Routing**: Detects nearby real-world safe places using OSM/Overpass with Nominatim fallback, then opens Google Maps navigation.
+- **Deployment Map**: Live responder-unit map follows the same geolocation and shows units relative to the user's current position.
+- **Incident Map Markers**: AI-enhanced disaster events automatically drop colored markers and danger radii on the map.
 
 ### 🏗️ Rescue Builder
 - **No-Code System Creation**: Build custom emergency response systems for any organization.
@@ -133,6 +137,14 @@ src/
 - **Contextual Intelligence**: LLMs specialized in emergency protocol and safety.
 - **Voice-First Design**: Speech-to-text and text-to-speech for hands-free operation.
 - **High Availability**: Redundant AI providers ensure the system works even during API outages.
+- **Per-Alert Risk Reasoning**: `src/utils/aiRouter.js` enriches NASA/USGS/OpenWeather alerts with plain-language risk context and safety steps.
+
+### ðŸŒ Live Location & Safe Zones (NEW)
+- **Browser Geolocation**: Live location is requested through the browser and works in production over HTTPS.
+- **Leaflet Maps**: Crisis and deployment maps use interactive Leaflet layers with multiple tile fallbacks for reliability.
+- **Safe-Zone Discovery**: Backend safe-zone lookup searches hospitals, clinics, police/fire stations, shelters, schools, colleges, universities, community centres, parks, playgrounds, stadiums, and open grounds.
+- **Provider Fallbacks**: Overpass is used first; Nominatim is used as a fallback when Overpass is unavailable or returns no results.
+- **Production Ready on Render**: The deployed HTTPS domain supports browser location permissions and calls same-origin APIs automatically.
 
 ---
 
@@ -179,7 +191,8 @@ ResQAI is built for scalability and production reliability:
 - **AI Engine**: Google Gemini (Primary), OpenRouter, Groq LLM.
 - **Auth**: Local Storage Sessions.
 - **Real-Time**: Socket.IO with room-based event isolation.
-- **Location Services**: Leaflet.js & OpenStreetMap.
+- **Location Services**: Leaflet.js, browser Geolocation API, OpenStreetMap/Overpass, Nominatim, and Google Maps directions.
+- **Real-World Alert Sources**: NASA EONET, USGS Earthquake GeoJSON feeds, and OpenWeather alerts.
 
 ---
 
@@ -192,6 +205,11 @@ To run this project, you will need to add the following environment variables to
 GEMINI_API_KEY=your_gemini_key
 OPENROUTER_PRIMARY_API_KEY=your_openrouter_key
 GROQ_API_KEY=your_groq_key
+
+# Optional real-world alert and routing providers
+OPENWEATHER_API_KEY=your_openweather_key
+OPENROUTESERVICE_API_KEY=your_openrouteservice_key
+MAPBOX_ACCESS_TOKEN=your_mapbox_token
 
 # Server
 PORT=3000
@@ -219,6 +237,20 @@ NODE_ENV=development
 4. **Access the Dashboard**:
    - Admin: `http://localhost:3000/dashboard`
    - Public System: Scan the generated QR code or use the `/s/:code` link
+   - Guest Crisis Portal: `http://localhost:3000/modules/crisis-portal/pages/guest-crisis-portal.html`
+
+5. **Use Live Location Features**:
+   Open the app through `http://localhost:3000` locally or HTTPS in production, then allow browser location access. Avoid opening the HTML directly with `file://`, because production-like geolocation and API calls require an HTTP(S) origin.
+
+---
+
+## ðŸš€ Production Deployment
+
+- Current Render deployment: `https://resqai-mdo4.onrender.com/`
+- Browser geolocation works on Render because the deployment is served over HTTPS.
+- NASA EONET and USGS alerts do not require API keys.
+- OpenWeather alerts require `OPENWEATHER_API_KEY` in the Render environment.
+- Dynamic safe-zone lookup depends on OpenStreetMap/Overpass/Nominatim availability and may fall back if those public services rate-limit.
 
 ---
 

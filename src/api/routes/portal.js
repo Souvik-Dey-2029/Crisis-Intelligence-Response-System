@@ -9,24 +9,36 @@ import { generateAIResponse } from '../../utils/aiRouter.js';
 
 const router = express.Router();
 
-const SAFE_ZONE_SEARCH_RADIUS_METERS = 5000;
-const SAFE_ZONE_MAX_DISTANCE_KM = 5;
+const SAFE_ZONE_SEARCH_RADIUS_METERS = 15000;
+const SAFE_ZONE_MAX_DISTANCE_KM = 15;
 const SAFE_ZONE_LIMIT = 5;
 
 const SAFE_ZONE_TYPE_RULES = {
     hospital: [
-        { key: 'amenity', value: 'hospital' }
+        { key: 'amenity', value: 'hospital' },
+        { key: 'amenity', value: 'clinic' },
+        { key: 'amenity', value: 'doctors' }
     ],
     police: [
-        { key: 'amenity', value: 'police' }
+        { key: 'amenity', value: 'police' },
+        { key: 'amenity', value: 'fire_station' }
     ],
     shelter: [
-        { key: 'amenity', value: 'shelter' }
+        { key: 'amenity', value: 'shelter' },
+        { key: 'amenity', value: 'community_centre' },
+        { key: 'amenity', value: 'school' },
+        { key: 'amenity', value: 'college' },
+        { key: 'amenity', value: 'university' },
+        { key: 'building', value: 'public' }
     ],
     open_ground: [
         { key: 'leisure', value: 'park' },
         { key: 'leisure', value: 'playground' },
+        { key: 'leisure', value: 'sports_centre' },
+        { key: 'leisure', value: 'stadium' },
         { key: 'landuse', value: 'grass' },
+        { key: 'landuse', value: 'recreation_ground' },
+        { key: 'landuse', value: 'village_green' },
         { key: 'natural', value: 'grassland' }
     ],
     elevated_area: [
@@ -41,7 +53,7 @@ const INCIDENT_SAFE_ZONE_RULES = {
     accident: ['hospital'],
     medical: ['hospital'],
     earthquake: ['open_ground', 'shelter'],
-    general: ['hospital', 'police', 'shelter']
+    general: ['hospital', 'police', 'shelter', 'open_ground']
 };
 
 // ==================== SAFETY TIPS DATABASE ====================
@@ -637,9 +649,21 @@ function extractSafeZoneCoordinates(element) {
 
 function inferSafeZoneType(tags = {}) {
     if (tags.amenity === 'hospital') return 'hospital';
+    if (tags.amenity === 'clinic' || tags.amenity === 'doctors') return 'hospital';
     if (tags.amenity === 'police') return 'police';
+    if (tags.amenity === 'fire_station') return 'police';
     if (tags.amenity === 'shelter') return 'shelter';
-    if (tags.leisure === 'park' || tags.leisure === 'playground' || tags.landuse === 'grass' || tags.natural === 'grassland') return 'open_ground';
+    if (tags.amenity === 'community_centre' || tags.amenity === 'school' || tags.amenity === 'college' || tags.amenity === 'university' || tags.building === 'public') return 'shelter';
+    if (
+        tags.leisure === 'park' ||
+        tags.leisure === 'playground' ||
+        tags.leisure === 'sports_centre' ||
+        tags.leisure === 'stadium' ||
+        tags.landuse === 'grass' ||
+        tags.landuse === 'recreation_ground' ||
+        tags.landuse === 'village_green' ||
+        tags.natural === 'grassland'
+    ) return 'open_ground';
     if (tags.natural === 'peak' || tags.tourism === 'viewpoint') return 'elevated_area';
     return 'general';
 }
@@ -730,6 +754,97 @@ out center tags;
     }
 }
 
+function getNominatimQueries(incidentType, category) {
+    const requestedTypes = getRequestedSafeZoneTypes(incidentType, category);
+    const queriesByType = {
+        hospital: ['hospital', 'clinic'],
+        police: ['police station', 'fire station'],
+        shelter: ['community centre', 'school', 'college', 'university'],
+        open_ground: ['park', 'playground', 'stadium'],
+        elevated_area: ['viewpoint', 'hill']
+    };
+
+    return requestedTypes.flatMap((type) =>
+        (queriesByType[type] || ['public building']).map((query) => ({ query, type }))
+    );
+}
+
+function buildNominatimViewbox(userLat, userLng) {
+    const delta = SAFE_ZONE_MAX_DISTANCE_KM / 111;
+    const lngDelta = delta / Math.max(0.2, Math.cos(userLat * Math.PI / 180));
+    return [
+        userLng - lngDelta,
+        userLat + delta,
+        userLng + lngDelta,
+        userLat - delta
+    ].join(',');
+}
+
+function normalizeNominatimSafeZone(record, userLat, userLng, type) {
+    const lat = parseFloat(record.lat);
+    const lng = parseFloat(record.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+    const distanceKm = calculateDistance(userLat, userLng, lat, lng);
+    if (!Number.isFinite(distanceKm) || distanceKm > SAFE_ZONE_MAX_DISTANCE_KM) return null;
+
+    const name = record.name || String(record.display_name || '').split(',')[0] || getSafeZoneTypeLabel(type).replace('_', ' ');
+    return {
+        name,
+        lat,
+        lng,
+        distance: formatDistanceKm(distanceKm),
+        distanceKm,
+        type,
+        address: record.display_name || '',
+        source: 'openstreetmap_nominatim'
+    };
+}
+
+async function fetchSafeZonesFromNominatim(userLat, userLng, incidentType, category) {
+    const viewbox = buildNominatimViewbox(userLat, userLng);
+    const queries = getNominatimQueries(incidentType, category);
+    const records = [];
+
+    for (const item of queries) {
+        const params = new URLSearchParams({
+            format: 'jsonv2',
+            limit: '4',
+            q: item.query,
+            viewbox,
+            bounded: '1',
+            addressdetails: '1'
+        });
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+                headers: {
+                    'User-Agent': 'ResQAI-local-dev/1.0 (emergency-safe-zone-lookup)'
+                },
+                signal: controller.signal
+            });
+
+            if (!response.ok) continue;
+
+            const data = await response.json();
+            records.push(...(data || [])
+                .map((record) => normalizeNominatimSafeZone(record, userLat, userLng, item.type))
+                .filter(Boolean));
+        } catch (error) {
+            console.warn(`[RapidPortal] Nominatim lookup failed for ${item.query}:`, error.message);
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+
+    return dedupeSafeZones(records)
+        .sort((a, b) => a.distanceKm - b.distanceKm)
+        .slice(0, SAFE_ZONE_LIMIT);
+}
+
 function dedupeSafeZones(safeZones) {
     const seen = new Set();
     return safeZones.filter((zone) => {
@@ -741,7 +856,17 @@ function dedupeSafeZones(safeZones) {
 }
 
 async function getNearbySafeZones(userLat, userLng, incidentType = 'general', category = 'all', limit = SAFE_ZONE_LIMIT) {
-    const safeZones = await fetchSafeZonesFromOverpass(userLat, userLng, incidentType, category);
+    let safeZones = [];
+    try {
+        safeZones = await fetchSafeZonesFromOverpass(userLat, userLng, incidentType, category);
+    } catch (error) {
+        console.warn('[RapidPortal] Overpass safe-zone lookup failed:', error.message);
+    }
+
+    if (!safeZones.length) {
+        safeZones = await fetchSafeZonesFromNominatim(userLat, userLng, incidentType, category);
+    }
+
     return safeZones
         .filter((zone) => Number.isFinite(zone.distanceKm) && zone.distanceKm <= SAFE_ZONE_MAX_DISTANCE_KM)
         .sort((a, b) => a.distanceKm - b.distanceKm)
