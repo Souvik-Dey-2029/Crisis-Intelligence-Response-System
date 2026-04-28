@@ -141,6 +141,72 @@ function syncLayoutAssetFromStructure(structure) {
     layoutImageMimeType = asset ? asset.mimeType : null;
 }
 
+function normalizeLayoutUpload(dataUrl, file) {
+    return new Promise(function (resolve, reject) {
+        const matches = String(dataUrl || '').match(/^data:(.+);base64,(.+)$/);
+        if (!matches) {
+            reject(new Error('Unable to read uploaded file'));
+            return;
+        }
+
+        const originalMimeType = matches[1];
+        const originalBase64 = matches[2];
+
+        if (!file || !file.type || !file.type.startsWith('image/')) {
+            resolve({
+                dataUrl,
+                mimeType: originalMimeType,
+                base64: originalBase64
+            });
+            return;
+        }
+
+        const image = new Image();
+        image.onload = function () {
+            try {
+                const maxDimension = 1800;
+                const scale = Math.min(1, maxDimension / Math.max(image.width || 1, image.height || 1));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round((image.width || 1) * scale));
+                canvas.height = Math.max(1, Math.round((image.height || 1) * scale));
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                const normalizedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                const normalizedMatches = normalizedDataUrl.match(/^data:(.+);base64,(.+)$/);
+
+                if (!normalizedMatches) {
+                    resolve({
+                        dataUrl,
+                        mimeType: originalMimeType,
+                        base64: originalBase64
+                    });
+                    return;
+                }
+
+                resolve({
+                    dataUrl: normalizedDataUrl,
+                    mimeType: normalizedMatches[1],
+                    base64: normalizedMatches[2]
+                });
+            } catch (error) {
+                reject(error);
+            }
+        };
+
+        image.onerror = function () {
+            resolve({
+                dataUrl,
+                mimeType: originalMimeType,
+                base64: originalBase64
+            });
+        };
+
+        image.src = dataUrl;
+    });
+}
+
 function getCurrentLayoutDataUrl() {
     const asset = getLayoutAsset();
 
@@ -1428,6 +1494,11 @@ function openSystem(systemID) {
     console.log('[OPEN] Opening system detail view for:', systemID);
 
     try {
+        localStorage.setItem('active_system_id', systemID);
+        console.log('[OPEN] Active system ID saved to localStorage');
+        window.location.href = `/modules/rescue-builder/pages/admin-panel.html?systemID=${encodeURIComponent(systemID)}`;
+        return;
+
         // Load the system from localStorage when available, but allow backend-only systems too
         const systems = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
         const system = systems.find(s => (s.systemID || s.id) === systemID);
@@ -1603,7 +1674,10 @@ async function analyzeLayout() {
             console.log('[LAYOUT-AI] Analysis received, score:', data.analysis.overallSafetyScore);
             systemData.layoutAnalysis = data.analysis;
             renderLayoutAnalysis(data.analysis);
-            showToast('Layout analysis complete!', 'success');
+            showToast(data.fallback ? 'Guided fallback analysis loaded. Please review it carefully.' : 'Layout analysis complete!', data.fallback ? 'warning' : 'success');
+            if (data.fallback) {
+                showManualFallbackForm();
+            }
         } else { throw new Error('No analysis data'); }
     } catch (error) {
         console.error('[LAYOUT-AI] Failed:', error.message);
@@ -3511,39 +3585,42 @@ function initializeModule() {
                     return;
                 }
                 const reader = new FileReader();
-                reader.onload = (event) => {
-                    const dataUrl = event.target.result;
-                    // Extract base64 and mime type for AI analysis
-                    const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
-                    if (matches) {
-                        layoutImageMimeType = matches[1];
-                        layoutImageBase64 = matches[2];
+                reader.onload = async (event) => {
+                    try {
+                        const rawDataUrl = event.target.result;
+                        const normalized = await normalizeLayoutUpload(rawDataUrl, file);
+
+                        layoutImageMimeType = normalized.mimeType;
+                        layoutImageBase64 = normalized.base64;
                         systemData.structure.layoutAsset = {
                             mimeType: layoutImageMimeType,
                             base64: layoutImageBase64,
                             fileName: file.name
                         };
                         console.log('[UPLOAD] Image loaded:', layoutImageMimeType, Math.round(layoutImageBase64.length / 1024) + 'KB');
+
+                        const preview = document.getElementById('upload-preview');
+                        if (file.type === 'application/pdf') {
+                            preview.innerHTML = '<div style="padding:20px;background:rgba(255,255,255,0.05);border-radius:8px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">\ud83d\udcc4</div><p style="color:#ccc;font-size:14px;">' + file.name + '</p><p style="color:#888;font-size:12px;">PDF uploaded successfully</p><p style="color:#f59e0b;font-size:12px;margin-top:8px;">Tip: upload a JPG or PNG screenshot of the plan for the most reliable AI analysis.</p></div>';
+                        } else {
+                            preview.innerHTML = `<img src="${normalized.dataUrl}" alt="Layout preview" />`;
+                        }
+
+                        const analyzeBtn = document.getElementById('btn-analyze-layout');
+                        if (analyzeBtn) {
+                            analyzeBtn.style.display = 'block';
+                            analyzeBtn.textContent = '\ud83d\udd0d Analyze Layout with AI';
+                        }
+
+                        const resultsDiv = document.getElementById('layout-analysis-results');
+                        const fallbackDiv = document.getElementById('layout-manual-fallback');
+                        if (resultsDiv) resultsDiv.style.display = 'none';
+                        if (fallbackDiv) fallbackDiv.style.display = 'none';
+                        systemData.layoutAnalysis = null;
+                    } catch (error) {
+                        console.error('[UPLOAD] Failed to prepare layout image:', error.message);
+                        showToast('Unable to prepare the uploaded layout file', 'error');
                     }
-                    // Show preview
-                    const preview = document.getElementById('upload-preview');
-                    if (file.type === 'application/pdf') {
-                        preview.innerHTML = '<div style="padding:20px;background:rgba(255,255,255,0.05);border-radius:8px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">\ud83d\udcc4</div><p style="color:#ccc;font-size:14px;">' + file.name + '</p><p style="color:#888;font-size:12px;">PDF uploaded successfully</p></div>';
-                    } else {
-                        preview.innerHTML = `<img src="${dataUrl}" alt="Layout preview" />`;
-                    }
-                    // Show analyze button
-                    const analyzeBtn = document.getElementById('btn-analyze-layout');
-                    if (analyzeBtn) {
-                        analyzeBtn.style.display = 'block';
-                        analyzeBtn.textContent = '\ud83d\udd0d Analyze Layout with AI';
-                    }
-                    // Reset previous analysis
-                    const resultsDiv = document.getElementById('layout-analysis-results');
-                    const fallbackDiv = document.getElementById('layout-manual-fallback');
-                    if (resultsDiv) resultsDiv.style.display = 'none';
-                    if (fallbackDiv) fallbackDiv.style.display = 'none';
-                    systemData.layoutAnalysis = null;
                 };
                 reader.readAsDataURL(file);
             }

@@ -3,6 +3,7 @@
 // Ensures AI NEVER fails with smart fallback
 // ============================================
 
+import './loadEnv.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 import axios from 'axios';
@@ -105,7 +106,8 @@ async function callOpenRouter(prompt, language = 'en') {
                         'HTTP-Referer': 'http://localhost:3000',
                         'X-Title': 'ResQAI Emergency Response'
                     },
-                    timeout: AI_TIMEOUT
+                    timeout: AI_TIMEOUT,
+                    proxy: false
                 }
             ),
             new Promise((_, reject) =>
@@ -181,7 +183,8 @@ async function callFreeAI(prompt, language = 'en') {
                 model: 'openai'
             }, {
                 headers: { 'Content-Type': 'application/json' },
-                timeout: AI_TIMEOUT
+                timeout: AI_TIMEOUT,
+                proxy: false
             }),
             new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('FreeAI timeout')), AI_TIMEOUT)
@@ -528,7 +531,8 @@ export async function generateImageAnalysis(imageBase64, mimeType, prompt) {
                             'HTTP-Referer': 'http://localhost:3000',
                             'X-Title': 'ResQAI Layout Analysis'
                         },
-                        timeout: 60000
+                        timeout: 60000,
+                        proxy: false
                     }
                 ),
                 new Promise((_, reject) =>
