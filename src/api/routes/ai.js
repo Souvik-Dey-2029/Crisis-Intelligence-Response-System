@@ -343,7 +343,20 @@ router.post('/analyze-layout', async (req, res) => {
 
         const prompt = buildLayoutAnalysisPrompt(description);
 
-        const rawResponse = await generateImageAnalysis(imageBase64, mimeType, prompt);
+        let rawResponse;
+        try {
+            rawResponse = await generateImageAnalysis(imageBase64, mimeType, prompt);
+        } catch (visionError) {
+            const fallbackAnalysis = buildFallbackLayoutAnalysis(description, mimeType, visionError.message);
+            return res.json({
+                success: true,
+                analysis: fallbackAnalysis,
+                timestamp: new Date().toISOString(),
+                provider: 'ResQAI-Guided-Fallback',
+                fallback: true,
+                message: visionError.message
+            });
+        }
         // AI response received
 
         // Parse JSON from response
@@ -463,6 +476,74 @@ Respond ONLY in this exact JSON format, no extra text:
     }
 
     return prompt;
+}
+
+function buildFallbackLayoutAnalysis(description, mimeType, errorMessage) {
+    const sourceLabel = mimeType === 'application/pdf' ? 'uploaded PDF layout' : 'uploaded layout image';
+    const notes = description && description.trim()
+        ? `Additional notes provided by the user: ${description.trim()}`
+        : 'No additional notes were provided with this upload.';
+
+    return {
+        exits: [
+            {
+                location: 'Verify all marked entry and exit points manually',
+                type: 'manual-review',
+                notes: `Automated vision analysis was unavailable for this ${sourceLabel}.`
+            }
+        ],
+        highRiskZones: [
+            {
+                location: 'Corridors, dead ends, enclosed rooms, and service areas',
+                risk: 'Potential congestion or delayed evacuation if routes are not clearly marked',
+                severity: 'medium'
+            }
+        ],
+        evacuationRoutes: [
+            {
+                from: 'Occupied rooms and work areas',
+                to: 'Nearest clearly marked safe exit',
+                path: 'Follow posted exit signage, avoid blocked passages, and route people toward the widest accessible exit.',
+                priority: 'primary'
+            }
+        ],
+        assemblyPoints: [
+            {
+                location: 'Open space outside the building and away from vehicle access lanes',
+                capacity: 'Set according to total occupancy',
+                notes: 'Choose a location visible to responders and far enough from the structure.'
+            }
+        ],
+        equipmentPlacement: [
+            {
+                equipment: 'Fire extinguishers and first-aid kits',
+                location: 'Near exits, stairwells, reception areas, and other high-traffic points',
+                reason: 'Keeps equipment accessible without forcing people back into danger zones.'
+            }
+        ],
+        recommendations: [
+            {
+                priority: 'high',
+                action: 'Manually confirm every exit and evacuation route on the uploaded plan before publishing it to users.',
+                reason: 'The AI vision providers could not complete a reliable map reading for this file.'
+            },
+            {
+                priority: 'medium',
+                action: 'Upload a clear JPG or PNG screenshot of the floor plan if the current file is a PDF or scanned document.',
+                reason: 'Flattened image uploads are typically more reliable for vision-based analysis.'
+            },
+            {
+                priority: 'medium',
+                action: 'Label assembly points, equipment locations, and any restricted or locked areas in the final system configuration.',
+                reason: 'This ensures responders still receive usable guidance even when automated analysis is limited.'
+            }
+        ],
+        overallSafetyScore: 5,
+        summary: `Guided fallback analysis generated because automated vision analysis was unavailable. ${notes}`,
+        requiresManualReview: true,
+        isFallback: true,
+        fallbackReason: errorMessage
+    };
 }
 
 // ==================== POST GENERATE SUMMARY ====================

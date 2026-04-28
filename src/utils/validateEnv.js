@@ -3,6 +3,8 @@
 // For debugging production deployment issues
 // ============================================
 
+import './loadEnv.js';
+
 export function validateEnvironment() {
     console.log('\n╔════════════════════════════════════════╗');
     console.log('║  🔍 ENVIRONMENT VALIDATION              ║');
@@ -15,7 +17,8 @@ export function validateEnvironment() {
         'NODE_ENV': nodeEnv,
         'PORT': port,
         'GEMINI_API_KEY': process.env.GEMINI_API_KEY,
-        'OPENROUTER_API_KEY': process.env.OPENROUTER_API_KEY,
+        'OPENROUTER_PRIMARY_API_KEY': process.env.OPENROUTER_PRIMARY_API_KEY || process.env.OPENROUTER_API_KEY,
+        'OPENROUTER_SECONDARY_API_KEY': process.env.OPENROUTER_SECONDARY_API_KEY,
         'GROQ_API_KEY': process.env.GROQ_API_KEY
     };
 
@@ -54,9 +57,14 @@ export function validateEnvironment() {
 }
 
 export function getAIStatus() {
+    const openRouterPrimary = !!((process.env.OPENROUTER_PRIMARY_API_KEY || process.env.OPENROUTER_API_KEY || '').trim());
+    const openRouterSecondary = !!((process.env.OPENROUTER_SECONDARY_API_KEY || '').trim());
+
     return {
         gemini: !!(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()),
-        openRouter: !!(process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY.trim()),
+        openRouterPrimary,
+        openRouterSecondary,
+        openRouter: openRouterPrimary || openRouterSecondary,
         groq: !!(process.env.GROQ_API_KEY && process.env.GROQ_API_KEY.trim()),
         environment: process.env.NODE_ENV || 'development'
     };
