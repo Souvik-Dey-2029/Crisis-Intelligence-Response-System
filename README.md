@@ -244,7 +244,7 @@ NODE_ENV=development
 
 ---
 
-## ðŸš€ Production Deployment
+## Production Deployment
 
 - Current Render deployment: `https://resqai-mdo4.onrender.com/`
 - Browser geolocation works on Render because the deployment is served over HTTPS.
