@@ -353,15 +353,34 @@
     box-shadow: 0 0 20px currentColor;
   }
   .pulse-dot {
-    width: 12px; height: 12px; background-color: #14d1ff; border-radius: 50%;
-    box-shadow: 0 0 10px #14d1ff, 0 0 20px #14d1ff; position: relative;
+    width: 12px;
+    height: 12px;
+    background-color: #14d1ff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #14d1ff, 0 0 20px #14d1ff;
+    position: relative;
+    display: block;
+    margin: 0;
+    padding: 0;
   }
   .pulse-dot::after {
-    content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-    border-radius: 50%; border: 2px solid rgba(20, 209, 255, 0.5);
-    animation: map-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(20, 209, 255, 0.6);
+    transform: translate(-50%, -50%);
+    animation: circular-pulse 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+    pointer-events: none;
+    box-sizing: border-box;
   }
-  @keyframes map-ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+  @keyframes circular-pulse {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(3.5); opacity: 0; }
+  }
 </style>
 <div class="relative flex-1 bg-surface-container-low rounded-3xl overflow-hidden border border-white/5" style="min-height: 350px;">
   <div id="live-safety-map" class="absolute inset-0 z-0"></div>
