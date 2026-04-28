@@ -23,6 +23,29 @@ function generateAccessCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
+async function isAccessCodeUnique(code) {
+    try {
+        const db = await getDatabase();
+        return new Promise((resolve) => {
+            db.get('SELECT id FROM custom_rescue_systems WHERE access_code = ? LIMIT 1', [code], (err, row) => {
+                if (err) return resolve(false);
+                resolve(!row);
+            });
+        });
+    } catch {
+        return false;
+    }
+}
+
+async function generateUniqueAccessCode(retries = 8) {
+    for (let i = 0; i < retries; i++) {
+        const code = generateAccessCode();
+        const unique = await isAccessCodeUnique(code);
+        if (unique) return code;
+    }
+    throw new Error('Unable to generate unique access code');
+}
+
 function safeParseJSON(value, fallback = null) {
     if (!value) return fallback;
     if (typeof value === 'object') return value;
@@ -245,7 +268,7 @@ router.post('/create', optionalAuth, async (req, res) => {
 
         const systemID = uuidv4();
         const systemCode = generateSystemCode();
-        const accessCode = generateAccessCode();
+        let accessCode = generateAccessCode();
         const adminID = adminId || req.user?.userID || null;
         const storedStructure = buildStoredStructure(structure, layoutAnalysis);
 
@@ -261,6 +284,7 @@ router.post('/create', optionalAuth, async (req, res) => {
                 [systemID, adminID, organizationName, organizationType, location, contactEmail, JSON.stringify(storedStructure), JSON.stringify(staff), JSON.stringify(riskTypes), 'active']);
         } else {
             const db = await getDatabase();
+            accessCode = await generateUniqueAccessCode();
             await new Promise((resolve, reject) => {
                 db.run(`INSERT INTO custom_rescue_systems (id, system_code, access_code, admin_id, organization_name, organization_type, location, contact_email, structure_json, staff_json, risk_types_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [systemID, systemCode, accessCode, adminID, organizationName, organizationType, location, contactEmail, JSON.stringify(storedStructure), JSON.stringify(staff), JSON.stringify(riskTypes), 'active', new Date().toISOString()],
@@ -787,37 +811,6 @@ router.get('/incidents/:systemID', async (req, res) => {
                 (err, rows) => err ? reject(err) : resolve(rows || []));
         });
         res.json({ success: true, incidents });
-    } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-// STATS: OVERVIEW — for SQL Module dashboard
-router.get('/stats/overview', optionalAuth, async (req, res) => {
-    try {
-        if (isMySQLAvailable()) {
-            const systems = await query('SELECT COUNT(*) as total FROM systems');
-            const active = await query('SELECT COUNT(*) as count FROM systems WHERE status = "active"');
-            const emergencies = await query('SELECT COUNT(*) as count FROM emergencies WHERE created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)');
-            return res.json({
-                stats: {
-                    total_systems: systems[0]?.total || 0,
-                    active_systems: active[0]?.count || 0,
-                    emergencies_this_month: emergencies[0]?.count || 0
-                }
-            });
-        }
-
-        const db = await getDatabase();
-        const stats = await new Promise((resolve) => {
-            db.get(`SELECT
-                (SELECT COUNT(*) FROM custom_rescue_systems) as total_systems,
-                (SELECT COUNT(*) FROM custom_rescue_systems WHERE status='active') as active_systems,
-                (SELECT COUNT(*) FROM emergencies WHERE created_at > datetime('now', '-30 days')) as emergencies_this_month`,
-                (err, row) => {
-                    if (err) resolve({ total_systems: 0, active_systems: 0, emergencies_this_month: 0 });
-                    else resolve(row || {});
-                });
-        });
-        res.json({ stats });
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 

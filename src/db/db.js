@@ -13,6 +13,7 @@ const DB_PATH = process.env.DB_PATH || path.join(__dirname, '../../emergencies.d
 
 let db = null;
 let usingMemoryFallback = false;
+let initPromise = null;
 
 function openDatabase(databasePath) {
     return new Promise((resolve, reject) => {
@@ -29,24 +30,32 @@ function openDatabase(databasePath) {
 }
 
 export async function initDatabase() {
+    if (initPromise) return initPromise;
     if (db) return db;
-    try {
-        await openDatabase(DB_PATH);
-        console.log('✅ Database initialized:', DB_PATH);
-        await createTables();
-        return db;
-    } catch (err) {
-        console.warn('⚠️ Primary SQLite init failed, using fallback in-memory DB:', err.message);
-        console.log('Using fallback in-memory DB');
-        await openDatabase(':memory:');
-        await createTables();
-        return db;
-    }
+
+    initPromise = (async () => {
+        try {
+            await openDatabase(DB_PATH);
+            console.log('✅ Database initialized:', DB_PATH);
+            await createTables();
+            return db;
+        } catch (err) {
+            console.warn('⚠️ Primary SQLite init failed, using fallback in-memory DB:', err.message);
+            console.log('Using fallback in-memory DB');
+            await openDatabase(':memory:');
+            await createTables();
+            return db;
+        } finally {
+            initPromise = null;
+        }
+    })();
+
+    return initPromise;
 }
 
 async function createTables() {
     if (!db) return;
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
         db.exec(`
             CREATE TABLE IF NOT EXISTS emergencies (
                 id TEXT PRIMARY KEY,
@@ -134,22 +143,54 @@ async function createTables() {
             );
 
             CREATE INDEX IF NOT EXISTS idx_emergencies_status ON emergencies(status);
-            CREATE INDEX IF NOT EXISTS idx_emergencies_system ON emergencies(system_id);
             CREATE INDEX IF NOT EXISTS idx_emergencies_created ON emergencies(created_at);
             CREATE INDEX IF NOT EXISTS idx_custom_systems_created ON custom_rescue_systems(created_at);
-            CREATE INDEX IF NOT EXISTS idx_custom_systems_code ON custom_rescue_systems(system_code);
-            CREATE INDEX IF NOT EXISTS idx_custom_systems_admin ON custom_rescue_systems(admin_id);
             CREATE INDEX IF NOT EXISTS idx_alerts_system ON system_alerts(system_id);
             CREATE INDEX IF NOT EXISTS idx_events_system ON system_events(system_id);
             CREATE INDEX IF NOT EXISTS idx_incidents_system ON incidents(system_id);
             CREATE INDEX IF NOT EXISTS idx_sos_events_system ON sos_events(system_id);
             CREATE INDEX IF NOT EXISTS idx_activity_logs_system ON activity_logs(system_id);
-            CREATE INDEX IF NOT EXISTS idx_chat_history_system ON chat_history(system_id);
         `, (err) => { if (err) console.warn('Table creation note:', err.message); resolve(); });
     });
+
+    await migrateSchema();
+
+    db.run('CREATE INDEX IF NOT EXISTS idx_emergencies_system ON emergencies(system_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_chat_history_system ON chat_history(system_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_custom_systems_code ON custom_rescue_systems(system_code)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_custom_systems_admin ON custom_rescue_systems(admin_id)');
+    db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_custom_systems_access_code ON custom_rescue_systems(access_code)');
+    db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_custom_systems_system_code ON custom_rescue_systems(system_code)');
+}
+
+async function migrateSchema() {
+    const database = db;
+    if (!database) return;
+
+    const addColumnIfMissing = (table, columnName, columnType) =>
+        new Promise((resolve) => {
+            database.all(`PRAGMA table_info(${table})`, [], async (err, rows) => {
+                if (err || !rows) return resolve();
+                const existing = rows.map(c => c.name);
+                if (existing.includes(columnName)) return resolve();
+
+                database.run(`ALTER TABLE ${table} ADD COLUMN ${columnName} ${columnType}`, () => resolve());
+            });
+        });
+
+    await addColumnIfMissing('custom_rescue_systems', 'system_code', 'TEXT');
+    await addColumnIfMissing('custom_rescue_systems', 'access_code', 'TEXT');
+    await addColumnIfMissing('custom_rescue_systems', 'admin_id', 'TEXT');
+    await addColumnIfMissing('custom_rescue_systems', 'layout_analysis', 'TEXT');
+    await addColumnIfMissing('custom_rescue_systems', 'layout_analysis_visible', 'INTEGER DEFAULT 1');
+    await addColumnIfMissing('custom_rescue_systems', 'layout_image', 'TEXT');
+
+    await addColumnIfMissing('emergencies', 'system_id', 'TEXT');
+    await addColumnIfMissing('chat_history', 'system_id', 'TEXT');
 }
 
 export async function getDatabase() {
+    if (initPromise) await initPromise;
     if (!db) await initDatabase();
     return db;
 }
@@ -219,10 +260,10 @@ export function getChatHistory() {
     });
 }
 
-export function addChatMessage(id, userMessage, botResponse) {
+export function addChatMessage(id, userMessage, botResponse, systemId = 'global') {
     return new Promise(async (resolve, reject) => {
         const db = await getDatabase();
-        db.run('INSERT INTO chat_history (id, user_message, bot_response) VALUES (?, ?, ?)', [id, userMessage, botResponse],
+        db.run('INSERT INTO chat_history (id, system_id, user_message, bot_response) VALUES (?, ?, ?, ?)', [id, systemId, userMessage, botResponse],
             function (err) { if (err) reject(err); else resolve({ success: true }); }
         );
     });

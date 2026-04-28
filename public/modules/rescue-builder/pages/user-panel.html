@@ -1032,9 +1032,9 @@
     async function loadAlerts() {
       try {
         const resp = await fetch(`${API}/${systemID}/alerts`);
-        if (!resp.ok) return;
+        if (!resp.ok) throw new Error('Failed to load alerts');
         const { alerts } = await resp.json();
-        const displayAlerts = alerts?.length ? alerts : getMockAlerts();
+        const displayAlerts = Array.isArray(alerts) ? alerts : [];
         const count = displayAlerts?.length || 0;
         document.getElementById('qstat-alerts').textContent = count;
 
@@ -1066,19 +1066,9 @@
         }
       } catch (err) {
         console.warn('Alert load error:', err);
-        const displayAlerts = getMockAlerts();
-        const renderAlert = (a) => `
-        <div class="alert-card border-l-4 border-rose-400/60">
-          <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-sm">${a.severity === 'critical' ? '🚨' : '⚠️'}</span>
-            <span class="text-rose-400 text-[10px] font-headline font-bold uppercase tracking-wider">${a.severity}</span>
-            <span class="text-slate-600 text-[10px] ml-auto font-mono">${new Date(a.created_at).toLocaleString()}</span>
-          </div>
-          <p class="text-slate-300 text-sm leading-relaxed">${a.message}</p>
-        </div>`;
-        document.getElementById('qstat-alerts').textContent = displayAlerts.length;
-        document.getElementById('home-alerts-preview').innerHTML = displayAlerts.slice(0, 2).map(renderAlert).join('');
-        document.getElementById('all-alerts-list').innerHTML = displayAlerts.map(renderAlert).join('');
+        document.getElementById('qstat-alerts').textContent = '0';
+        document.getElementById('home-alerts-preview').innerHTML = '<div class="text-slate-600 text-sm text-center py-4 flex items-center justify-center gap-2"><span class="material-symbols-outlined text-base">error</span> Unable to load alerts</div>';
+        document.getElementById('all-alerts-list').innerHTML = '<div class="text-slate-600 text-sm text-center py-8">Unable to load live alerts right now.</div>';
       }
     }
 
@@ -1208,11 +1198,14 @@ Give a clear, calm, and practical emergency response. Be specific to this organi
     async function loadActivity() {
       try {
         const resp = await fetch(`${API}/logs/activity?systemId=${systemID}&limit=30`);
-        if (!resp.ok) return;
+        if (!resp.ok) throw new Error('Failed to load activity');
         const { logs } = await resp.json();
         const list = document.getElementById('activity-list');
-        const displayLogs = logs?.length ? logs : getMockActivity();
-        if (!logs?.length) { list.innerHTML = '<div class="text-slate-600 text-sm text-center py-6">No live activity available</div>'; }
+        const displayLogs = Array.isArray(logs) ? logs : [];
+        if (!displayLogs.length) {
+          list.innerHTML = '<div class="text-slate-600 text-sm text-center py-6">No live activity available</div>';
+          return;
+        }
         const icons = { SYSTEM_CREATED: 'add_circle', SYSTEM_UPDATED: 'edit', EMERGENCY_SOS: 'emergency', ALERT_BROADCAST: 'campaign', AI_ANALYSIS: 'smart_toy', SQL_QUERY: 'database' };
         const colors = { SYSTEM_CREATED: 'emerald', SYSTEM_UPDATED: 'sky', EMERGENCY_SOS: 'rose', ALERT_BROADCAST: 'amber', AI_ANALYSIS: 'violet', SQL_QUERY: 'slate' };
         list.innerHTML = displayLogs.map(l => {
@@ -1228,7 +1221,10 @@ Give a clear, calm, and practical emergency response. Be specific to this organi
           <span class="text-slate-700 text-[10px] font-mono whitespace-nowrap">${new Date(l.created_at).toLocaleTimeString()}</span>
         </div>`;
         }).join('');
-      } catch (err) { console.warn('Activity load error:', err); }
+      } catch (err) {
+        console.warn('Activity load error:', err);
+        document.getElementById('activity-list').innerHTML = '<div class="text-slate-600 text-sm text-center py-6">Unable to load activity right now.</div>';
+      }
     }
 
     // ===== NAV =====

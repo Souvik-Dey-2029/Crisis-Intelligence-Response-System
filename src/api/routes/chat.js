@@ -44,7 +44,7 @@ Provide a comprehensive, structured response in ${language} that follows the exa
 
 router.post('/', async (req, res) => {
     try {
-        const { message, language = 'en' } = req.body;
+        const { message, language = 'en', systemId = 'global' } = req.body;
 
         if (!message || !message.trim()) {
             // Empty message validation failed
@@ -63,7 +63,7 @@ router.post('/', async (req, res) => {
 
         // Store in database (optional)
         try {
-            await addChatMessage(id, message, response);
+            await addChatMessage(id, message, response, systemId);
             // Database save skipped or completed
 
         } catch (error) {
