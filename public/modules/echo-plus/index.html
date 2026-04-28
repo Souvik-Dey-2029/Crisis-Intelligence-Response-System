@@ -1661,8 +1661,7 @@
 
       <div class="form-group">
         <label class="form-label">Master Password</label>
-        <input class="form-input" id="admin-pass-input" type="password" placeholder="echo24" value="echo24" />
-        <div style="margin-top:8px;font-size:12px;color:#94a3b8;">Password: <strong style="color:#f8fafc;">echo24</strong></div>
+        <input class="form-input" id="admin-pass-input" type="password" placeholder="Enter password" />
       </div>
       <div class="error-msg" id="admin-login-error"></div>
       <div class="echo-mt-4">
@@ -3080,14 +3079,14 @@
       'use strict';
 
       // ── Config ──────────────────────────────────────────────────────
-      const WEAPON_SCAN_MS   = 80;     // 10 FPS — match knife loop speed
-      const WEAPON_CONF_MIN  = 0.40;    // 45% confidence minimum (same as before)
-      const WEAPON_DEBOUNCE  = 8000;   // 20s between alerts per camera
-      const MODEL_INPUT_SIZE = 640;     // YOLO11 input resolution
-      const WEAPON_CONSEC_MIN    = 2;   // require 5 consecutive positive frames (~0.5s) before siren
-      const WEAPON_WARMUP_FRAMES = 3;  // ignore first 15 frames while model stabilises
-      const MODEL_URL        = '/models/weapon-model.onnx';
-      const NMS_IOU_THRESH   = 0.45;    // IoU threshold for NMS
+      const WEAPON_SCAN_MS   = 100;    // Increased slightly for performance
+      const WEAPON_CONF_MIN  = 0.40;    
+      const WEAPON_DEBOUNCE  = 8000;   
+      const MODEL_INPUT_SIZE = 640;     
+      const WEAPON_CONSEC_MIN    = 2;   
+      const WEAPON_WARMUP_FRAMES = 3;  
+      const MODEL_URL        = '/model/model/weapon-model.onnx';
+      const NMS_IOU_THRESH   = 0.45;    
 
       const WEAPON_ICONS = {
         gun: '🔫', pistol: '🔫', rifle: '🔫', handgun: '🔫',
@@ -3166,28 +3165,45 @@
       // ── Post-processing: raw ONNX output → predictions array ─────────
       // Output shape: [1, 5, 8400]  →  rows: x_c, y_c, w, h, gun_conf
       function postprocess(rawOutput) {
-        const data  = rawOutput.data;          // Float32Array flat
+        let data = rawOutput.data;
+        const dims = rawOutput.dims; // [1, 5, 8400] or [1, 8400, 5]
         const ANCHORS = 8400;
         const preds = [];
 
-        for (let a = 0; a < ANCHORS; a++) {
-          const conf = data[4 * ANCHORS + a]; // row 4 = confidence
-          if (conf < WEAPON_CONF_MIN) continue;
+        // YOLO11 output can be transposed depending on export
+        // If [1, 5, 8400], it's (x, y, w, h, score) per row
+        // If [1, 8400, 5], it's (x, y, w, h, score) per column
+        const isTransposed = dims[1] > dims[2]; // e.g. 8400 > 5
 
-          const cx = data[0 * ANCHORS + a];
-          const cy = data[1 * ANCHORS + a];
-          const bw = data[2 * ANCHORS + a];
-          const bh = data[3 * ANCHORS + a];
+        for (let a = 0; a < ANCHORS; a++) {
+          let cx, cy, bw, bh, conf;
+          
+          if (!isTransposed) {
+            // [1, 5, 8400] format
+            conf = data[4 * ANCHORS + a];
+            if (conf < WEAPON_CONF_MIN) continue;
+            cx = data[0 * ANCHORS + a];
+            cy = data[1 * ANCHORS + a];
+            bw = data[2 * ANCHORS + a];
+            bh = data[3 * ANCHORS + a];
+          } else {
+            // [1, 8400, 5] format
+            const idx = a * dims[2];
+            conf = data[idx + 4];
+            if (conf < WEAPON_CONF_MIN) continue;
+            cx = data[idx + 0];
+            cy = data[idx + 1];
+            bw = data[idx + 2];
+            bh = data[idx + 3];
+          }
 
           preds.push({ cx, cy, bw, bh, conf });
         }
 
         if (preds.length === 0) return [];
 
-        // Sort descending confidence, apply NMS
         preds.sort((a, b) => b.conf - a.conf);
         const kept = [];
-
         for (const p of preds) {
           let suppress = false;
           for (const k of kept) {
@@ -3196,7 +3212,6 @@
           if (!suppress) kept.push(p);
         }
 
-        // Convert to Roboflow-compatible format (x/y = center, coords in 640×640 space)
         return kept.map(p => ({
           class: 'gun',
           confidence: p.conf,
@@ -3603,11 +3618,26 @@
         }, 500);
       }
 
-      // Boot
+      // ── Boot & Audio Pre-warm ───────────────────────────────────────
+      function initWeaponSystem() {
+        startWeaponLoops();
+        
+        // Resume AudioContext on first user interaction to bypass browser blocks
+        const resumeAudio = () => {
+          if (!_wSirenCtx) _wSirenCtx = new (window.AudioContext || window.webkitAudioContext)();
+          if (_wSirenCtx.state === 'suspended') _wSirenCtx.resume();
+          window.removeEventListener('click', resumeAudio);
+          window.removeEventListener('keydown', resumeAudio);
+          console.log('[WEAPON] 🔊 AudioContext pre-warmed and ready');
+        };
+        window.addEventListener('click', resumeAudio);
+        window.addEventListener('keydown', resumeAudio);
+      }
+
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startWeaponLoops);
+        document.addEventListener('DOMContentLoaded', initWeaponSystem);
       } else {
-        setTimeout(startWeaponLoops, 300);
+        setTimeout(initWeaponSystem, 300);
       }
 
       console.log('[WEAPON] ✅ YOLO11 ONNX weapon detection loaded — local inference, no API key required');
